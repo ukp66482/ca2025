@@ -87,7 +87,7 @@ UF8_ENCODE:
     sw ra, 4(sp)
     sw a0, 0(sp)
     addi t0, x0, 16
-    blt a0, t0, ENCODE_RET               # if x < 16 return a0
+    blt a0, t0, ENCODE_RET              # if x < 16 return a0
     jal ra, CLZ
     addi t0, x0, 31
     sub t0, t0, a0                      # t0 = msb = 31 - clz_result
