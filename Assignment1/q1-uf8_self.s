@@ -1,6 +1,5 @@
 .data
 newline: .string "\n"
-arrow:   .string " -> "
 okmsg:   .string "All tests passed.\n"
 
 .text
@@ -50,7 +49,7 @@ CLZ:
 
 CLZ_LOOP:
     srl t2, a0, t1                      # t2 = x >> c = y
-    beq t2, x0, CLZ_MSB_IN_LOWER_HALF   # if y==0
+    beq t2, x0, CLZ_MSB_IN_LOWER_HALF   # if y == 0
     sub t0, t0, t1                      # n = n - c
     add a0, t2, x0                      # x = y
 
