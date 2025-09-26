@@ -1,17 +1,45 @@
 .data
 newline: .string "\n"
-input: .word 0
+arrow:   .string " -> "
+okmsg:   .string "All tests passed.\n"
+
 .text
 main:
-    la a0, input
-    lw a0, 0(a0)
-    #jal ra, CLZ
-    #jal ra, UF8_DECODE
-    jal ra, UF8_ENCODE
-    li a7 1
+    addi a3, x0, 0                      # i = 0
+    addi a4, x0, 256                    # limit = 256
+    addi s3, x0, 1                      # passed = true (1)
+
+LOOP:
+    bge  a3, a4, END                    # if i >= 256 stop
+
+    mv   a0, a3                         # fl = i
+    jal  ra, UF8_DECODE
+    mv   s1, a0                         # value
+    
+    mv   a0, s1
+    jal  ra, UF8_ENCODE
+    mv   s2, a0                         # fl2
+    
+    bne  s2, a3, SET_FAIL               # if fl2 != i fail  
+
+NEXT_ITER:
+    addi a3, a3, 1
+    jal  x0, LOOP
+
+SET_FAIL:
+    addi s3, x0, 0                      # passed = false
+    addi a3, a4, 0                      # force break (i = limit)
+    jal  x0, LOOP
+
+END:
+    beq  s3, x0, EXIT                   # if !passed skip message
+    la   a0, okmsg                  
+    li   a7, 4
     ecall
-    li a7 10
-    ecall
+
+EXIT:
+    li   a7, 10
+    ecall   
 
 CLZ:
     addi sp, sp, -8
@@ -64,7 +92,9 @@ UF8_ENCODE:
     jal ra, CLZ
     addi t0, x0, 31
     sub t0, t0, a0                      # t0 = msb = 31 - clz_result
-    addi t1, x0, 0                      # t1 = exponent
+    lw a0, 0(sp)                        # reload a0 = value
+    addi t1, x0, 0                      # t1 = exponent = 0
+    addi t4, x0, 0                      # t4 = overflow = 0
     addi t3, x0, 5                      
     blt t0, t3, ENCODE_FIND_E           # if msb < 5 goto ENCODE_FIND
     addi t1, t0, -4                     # exponent = msb - 4 
@@ -73,7 +103,6 @@ UF8_ENCODE:
     addi t1, x0, 15                     # exponent = 15
 
 SKIP:
-    addi t4, x0, 0                      # t4 = overflow = 0
     addi t5, x0, 0                      # t5 = e = 0
     lw a0, 0(sp)                        # reload a0 = value
 
