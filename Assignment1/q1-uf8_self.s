@@ -42,8 +42,8 @@ EXIT:
 
 CLZ:
     addi sp, sp, -8
-    sw ra, 4(sp)
-    sw a0, 0(sp)                        # input x
+    sw   ra, 4(sp)
+    sw   a0, 0(sp)                      # input x
     addi t0, x0, 32                     # t0 = n    
     addi t1, x0, 16                     # t1 = c
 
@@ -55,17 +55,17 @@ CLZ_LOOP:
 
 CLZ_MSB_IN_LOWER_HALF:
     srli t1, t1, 1
-    bne t1, x0, CLZ_LOOP
-    sub a0, t0, a0                      # return
-    lw ra, 4(sp)
-    lw a1, 0(sp)                        # input x 
+    bne  t1, x0, CLZ_LOOP
+    sub  a0, t0, a0                     # return
+    lw   ra, 4(sp)
+    lw   a1, 0(sp)                      # input x 
     addi sp, sp, 8
     ret                                 # a0 clz_result, a1 input
 
 UF8_DECODE:
     addi sp, sp, -8
-    sw ra, 4(sp)
-    sw a0, 0(sp)
+    sw   ra, 4(sp)
+    sw   a0, 0(sp)
     andi t0, a0, 0x0f                   # t0 = mantissa
     srli t1, a0, 4                      # t1 = exponent 
     addi t2  x0, 15       
@@ -77,33 +77,33 @@ UF8_DECODE:
     sll  t0, t0, t1
     add  t0, t0, t3
     addi a0, t0, 0    
-    lw ra, 4(sp)
-    lw a1, 0(sp) 
+    lw   ra, 4(sp)
+    lw   a1, 0(sp) 
     addi sp, sp, 8
     ret                                 # a0 decode_result, a1 input
 
 UF8_ENCODE:
     addi sp, sp, -8
-    sw ra, 4(sp)
-    sw a0, 0(sp)
+    sw   ra, 4(sp)
+    sw   a0, 0(sp)
     addi t0, x0, 16
-    blt a0, t0, ENCODE_RET              # if x < 16 return a0
-    jal ra, CLZ
+    blt  a0, t0, ENCODE_RET             # if x < 16 return a0
+    jal  ra, CLZ
     addi t0, x0, 31
-    sub t0, t0, a0                      # t0 = msb = 31 - clz_result
-    lw a0, 0(sp)                        # reload a0 = value
+    sub  t0, t0, a0                     # t0 = msb = 31 - clz_result
+    lw   a0, 0(sp)                      # reload a0 = value
     addi t1, x0, 0                      # t1 = exponent = 0
     addi t4, x0, 0                      # t4 = overflow = 0
     addi t3, x0, 5                      
-    blt t0, t3, ENCODE_FIND_E           # if msb < 5 goto ENCODE_FIND
+    blt  t0, t3, ENCODE_FIND_E          # if msb < 5 goto ENCODE_FIND
     addi t1, t0, -4                     # exponent = msb - 4 
     addi t3, x0, 15
-    blt t1, t3, SKIP                    # if exponent < 15 goto SKIP
+    blt  t1, t3, SKIP                   # if exponent < 15 goto SKIP
     addi t1, x0, 15                     # exponent = 15
 
 SKIP:
     addi t5, x0, 0                      # t5 = e = 0
-    lw a0, 0(sp)                        # reload a0 = value
+    lw   a0, 0(sp)                      # reload a0 = value
 
 ENCODE_CAL_OVERFLOW:
     bge  t5, t1, ENCODE_ADJUST          # if e >= exponent
@@ -113,8 +113,8 @@ ENCODE_CAL_OVERFLOW:
     jal  x0, ENCODE_CAL_OVERFLOW
 
 ENCODE_ADJUST:
-    bge x0, t1, ENCODE_FIND_E           # if 0 >= exponent
-    bge a0, t4, ENCODE_FIND_E           # if value >= overflow
+    bge  x0, t1, ENCODE_FIND_E          # if 0 >= exponent
+    bge  a0, t4, ENCODE_FIND_E          # if value >= overflow
     addi t4, t4, -16                    # overflow = overflow - 16
     srli t4, t4, 1                      # overflow = overflow >> 1
     addi t1, t1, -1                     # exponent--
@@ -131,13 +131,13 @@ ENCODE_FIND_E:
     jal  x0, ENCODE_FIND_E
 
 ENCODE_COMBINE:
-    sub t2, a0, t4                      # t2 = value - overflow
-    srl t2, t2, t1                      # t2 = mantissa = (value - overflow) >> exponent
+    sub  t2, a0, t4                     # t2 = value - overflow
+    srl  t2, t2, t1                     # t2 = mantissa = (value - overflow) >> exponent
     slli t1, t1, 4                      # t1 = exponent << 4
-    or  a0, t1, t2
+    or   a0, t1, t2
 
 ENCODE_RET:
-    lw ra, 4(sp)
-    lw a1, 0(sp) 
+    lw   ra, 4(sp)
+    lw   a1, 0(sp) 
     addi sp, sp, 8
     ret
