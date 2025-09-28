@@ -28,7 +28,7 @@ static inline float bf16_to_f32(bf16_t val)
 int main(void)
 {
     float test_values[] = {
-        1.0f, 2.0f, 1.0f
+        1.5f, 1.0001f
     };
 
     for (size_t i = 0; i < sizeof(test_values) / sizeof(test_values[0]); i++) {

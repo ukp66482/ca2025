@@ -40,12 +40,19 @@
                     .word 1, 0, 0
                     .word 1, 0
                     .word 0, 0, 0
-    
+
+    roundingOKmsg:   .string "Rounding: PASS\n"
+    roundingFAILmsg: .string "Rounding: FAIL\n"
+
+    roundingValues:  .word 0x3FC00000, 0x3F800347
+    roundingResults: .word 0x3FC00000, 0x3F800000
+
 .text
 main:
     #jal ra, CONVERT_TEST
     #jal  ra, SPECIAL_TEST
-    jal  ra, COMPARE_TEST
+    #jal  ra, COMPARE_TEST
+    jal  ra, ROUNDING_TEST
     li   a7, 10
     ecall
 
@@ -504,6 +511,43 @@ COMPARE_FAIL:
 
 COMPARE_ALL_PASS:
     la   a0, compareOKmsg
+    li   a7, 4
+    ecall
+    lw   ra, 0(sp)
+    addi sp, sp, 4
+    ret
+
+ROUNDING_TEST:
+    addi sp, sp, -4
+    sw   ra, 0(sp)
+    addi s0, x0, 0
+    la   s1, roundingValues
+    la   s2, roundingResults
+    addi s3, x0, 2
+
+ROUNDING_TEST_LOOP:
+    beq  s0, s3, ROUNDING_ALL_PASS          # if i == 2, all pass
+    slli s4, s0, 2                          # s4 = i * 4
+    add  s5, s1, s4                         # s5 = &roundingValues[i]
+    add  s6, s2, s4                         # s6 = &roundingResults[i]
+    lw   a0, 0(s5)                          # a0 = roundingValues[i]
+    lw   s7, 0(s6)                          # s7 = roundingResults[i]
+    jal  ra, F32_TO_BF16                    # convert to bf16
+    jal  ra, BF16_TO_F32                    # convert back to f32
+    bne  a0, s7, ROUNDING_FAIL
+    addi s0, s0, 1
+    jal  x0, ROUNDING_TEST_LOOP
+
+ROUNDING_FAIL:
+    la   a0, roundingFAILmsg
+    li   a7, 4
+    ecall
+    lw   ra, 0(sp)
+    addi sp, sp, 4
+    ret
+
+ROUNDING_ALL_PASS:
+    la   a0, roundingOKmsg
     li   a7, 4
     ecall
     lw   ra, 0(sp)
