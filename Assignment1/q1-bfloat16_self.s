@@ -3,7 +3,7 @@
     BF16_EXP_MASK:  .word 0x7F80
     BF16_MANT_MASK: .word 0x007F
     BF16_EXP_BIAS:  .word 127
-    BF16_ALL_MASK:  .word 0x7FFF           # all bits except sign bit
+    BF16_ALL_MASK:  .word 0x7FFF            # all bits except sign bit
     
     convertOKmsg:   .string "Basic conversions: PASS\n"
     convertFAILmsg: .string "Basic conversions: FAIL\n"
@@ -62,16 +62,16 @@ BF16_EXP_ALL1:
     sw   ra, 4(sp)
     sw   a0, 0(sp)
     la   t0, BF16_EXP_MASK
-    lw   t0, 0(t0)                         # t0 = BF16_EXP_MASK
-    and  t1, a0, t0                        # t1 = a0 & BF16_EXP_MASK
-    bne  t1, t0, BF16_EXP_NOTALL1          # if (a0 & BF16_EXP_MASK) != BF16_EXP_MASK, go to NOTALL1
-    addi a0, x0, 1                         # exponent is all 1 return 1
+    lw   t0, 0(t0)                          # t0 = BF16_EXP_MASK
+    and  t1, a0, t0                         # t1 = a0 & BF16_EXP_MASK
+    bne  t1, t0, BF16_EXP_NOTALL1           # if (a0 & BF16_EXP_MASK) != BF16_EXP_MASK, go to NOTALL1
+    addi a0, x0, 1                          # exponent is all 1 return 1
     lw   ra, 4(sp)
     addi sp, sp, 8
     ret
 
 BF16_EXP_NOTALL1:
-    addi a0, x0, 0                         # exponent is not all 1 return 0
+    addi a0, x0, 0                          # exponent is not all 1 return 0
     lw   ra, 4(sp)
     addi sp, sp, 8
     ret
@@ -81,10 +81,10 @@ BF16_MANT_NOT0:
     sw   ra, 4(sp)
     sw   a0, 0(sp)
     la   t0, BF16_MANT_MASK
-    lw   t0, 0(t0)                         # t0 = BF16_MANT_MASK
-    and  t1, a0, t0                        # t1 = a0 & BF16_MANT_MASK
+    lw   t0, 0(t0)                          # t0 = BF16_MANT_MASK
+    and  t1, a0, t0                         # t1 = a0 & BF16_MANT_MASK
     beq  t1, x0, BF16_MANT0
-    addi a0, x0, 1                         # mantissa is not 0 return 1
+    addi a0, x0, 1                          # mantissa is not 0 return 1
     lw   ra, 4(sp)
     addi sp, sp, 8
     ret
@@ -92,7 +92,7 @@ BF16_MANT_NOT0:
 BF16_MANT0:
     lw   ra, 4(sp)
     addi sp, sp, 8
-    addi a0, x0, 0                         # mantissa is 0 return 0
+    addi a0, x0, 0                          # mantissa is 0 return 0
     ret
 
 BF16_ISNAN:
@@ -100,17 +100,17 @@ BF16_ISNAN:
     sw   ra, 4(sp)
     sw   a0, 0(sp)
     jal  ra, BF16_EXP_ALL1
-    beq  a0, x0, BF16_NOTNAN               # if exponent is not all 1, go to NOTNAN
-    lw   a0, 0(sp)                         # load original a0
+    beq  a0, x0, BF16_NOTNAN                # if exponent is not all 1, go to NOTNAN
+    lw   a0, 0(sp)                          # load original a0
     jal  ra, BF16_MANT_NOT0
-    beq  a0, x0, BF16_NOTNAN               # if mantissa is 0, go to NOTNAN
-    addi a0, x0, 1                         # is NaN return 1
+    beq  a0, x0, BF16_NOTNAN                # if mantissa is 0, go to NOTNAN
+    addi a0, x0, 1                          # is NaN return 1
     lw   ra, 4(sp)
     addi sp, sp, 8
     ret
 
 BF16_NOTNAN:
-    addi a0, x0, 0                         # not NaN return 0
+    addi a0, x0, 0                          # not NaN return 0
     lw   ra, 4(sp)
     addi sp, sp, 8
     ret
@@ -120,17 +120,17 @@ BF16_ISINF:
     sw   ra, 4(sp)
     sw   a0, 0(sp)
     jal  ra, BF16_EXP_ALL1
-    beq  a0, x0, BF16_NOTINF               # if exponent is not all 1, go to NOTINF
-    lw   a0, 0(sp)                         # load original a0
-    jal  ra, BF16_MANT_NOT0                # a0 = 1 if mantissa is not 0 else 0
-    bne  a0, x0, BF16_NOTINF               # if mantissa is not 0, go to NOTINF  
-    addi a0, x0, 1                         # is Inf return 1
+    beq  a0, x0, BF16_NOTINF                # if exponent is not all 1, go to NOTINF
+    lw   a0, 0(sp)                          # load original a0
+    jal  ra, BF16_MANT_NOT0                 # a0 = 1 if mantissa is not 0 else 0
+    bne  a0, x0, BF16_NOTINF                # if mantissa is not 0, go to NOTINF  
+    addi a0, x0, 1                          # is Inf return 1
     lw   ra, 4(sp)
     addi sp, sp, 8
     ret
 
 BF16_NOTINF:
-    addi a0, x0, 0                         # not Inf return 0
+    addi a0, x0, 0                          # not Inf return 0
     lw   ra, 4(sp)
     addi sp, sp, 8
     ret
@@ -140,16 +140,16 @@ BF16_ISZERO:
     sw   ra, 4(sp)
     sw   a0, 0(sp)
     la   t0, BF16_ALL_MASK
-    lw   t0, 0(t0)                         # t0 = BF16_ALL_MASK
-    and  t1, a0, t0                        # t1 = a0 & BF16_ALL_MASK
-    bne  t1, x0, BF16_NOTZERO              # if (a0 & BF16_ALL_MASK) != 0, go to NOTZERO
-    addi a0, x0, 1                         # is zero return 1
+    lw   t0, 0(t0)                          # t0 = BF16_ALL_MASK
+    and  t1, a0, t0                         # t1 = a0 & BF16_ALL_MASK
+    bne  t1, x0, BF16_NOTZERO               # if (a0 & BF16_ALL_MASK) != 0, go to NOTZERO
+    addi a0, x0, 1                          # is zero return 1
     lw   ra, 4(sp)
     addi sp, sp, 8
     ret
 
 BF16_NOTZERO:
-    addi a0, x0, 0                         # not zero return 0  
+    addi a0, x0, 0                          # not zero return 0  
     lw   ra, 4(sp)
     addi sp, sp, 8
     ret
@@ -198,92 +198,92 @@ BF16_NOTZERO:
 BF16_EQ:
     addi sp, sp, -12
     sw   ra, 8(sp)
-    sw   a1, 4(sp)                         # 4(sp) = b
-    sw   a0, 0(sp)                         # 0(sp) = a
+    sw   a1, 4(sp)                          # 4(sp) = b
+    sw   a0, 0(sp)                          # 0(sp) = a
     jal  ra, BF16_ISNAN
-    bne  a0, x0, 1f                        # if a is NaN, go to Not equal
-    lw   a0, 4(sp)                         # load b
+    bne  a0, x0, 1f                         # if a is NaN, go to Not equal
+    lw   a0, 4(sp)                          # load b
     jal  ra, BF16_ISNAN
-    bne  a0, x0, 1f                        # if b is NaN, go to Not equal
-    lw   a0, 0(sp)                         # load a
+    bne  a0, x0, 1f                         # if b is NaN, go to Not equal
+    lw   a0, 0(sp)                          # load a
     jal  ra, BF16_ISZERO
-    beq  a0, x0, 3f                        # if a is not zero, go to compare a and b
-    lw   a0, 4(sp)                         # load b
+    beq  a0, x0, 3f                         # if a is not zero, go to compare a and b
+    lw   a0, 4(sp)                          # load b
     jal  ra, BF16_ISZERO
-    beq  a0, x0, 3f                        # if b is not zero, go to compare a and b
-    jal  x0, 2f                            # both a and b are zero, go to Equal
+    beq  a0, x0, 3f                         # if b is not zero, go to compare a and b
+    jal  x0, 2f                             # both a and b are zero, go to Equal
 
 1: # Not Equal
-    addi a0, x0, 0                         # Not Equal return 0
+    addi a0, x0, 0                          # Not Equal return 0
     lw   ra, 8(sp)
     addi sp, sp, 12
     ret
 
 2: # Equal
-    addi a0, x0, 1                         # Equal return 1
+    addi a0, x0, 1                          # Equal return 1
     lw   ra, 8(sp)
     addi sp, sp, 12
     ret
 
 3: # compare a and b
-    lw   a0, 0(sp)                         # load a
-    lw   a1, 4(sp)                         # load b
-    beq  a0, a1, 2b                        # if a == b, go to Equal
-    jal  x0, 1b                            # else go to Not Equal
+    lw   a0, 0(sp)                          # load a
+    lw   a1, 4(sp)                          # load b
+    beq  a0, a1, 2b                         # if a == b, go to Equal
+    jal  x0, 1b                             # else go to Not Equal
 
 BF16_LT: # a0 = a, a1 = b, return 1 if a < b else 0
     addi sp, sp, -12
     sw   ra, 8(sp)
-    sw   a1, 4(sp)                         # 4(sp) = b
-    sw   a0, 0(sp)                         # 0(sp) = a
+    sw   a1, 4(sp)                          # 4(sp) = b
+    sw   a0, 0(sp)                          # 0(sp) = a
     jal  ra, BF16_ISNAN
-    bne  a0, x0, 1f                        # if a is NaN, go to Not Less
-    lw   a0, 4(sp)                         # load b
+    bne  a0, x0, 1f                         # if a is NaN, go to Not Less
+    lw   a0, 4(sp)                          # load b
     jal  ra, BF16_ISNAN
-    bne  a0, x0, 1f                        # if b is NaN, go to Not Less
-    lw   a0, 0(sp)                         # load a
+    bne  a0, x0, 1f                         # if b is NaN, go to Not Less
+    lw   a0, 0(sp)                          # load a
     jal  ra, BF16_ISZERO
-    beq  a0, x0, 3f                        # if a is not zero, go to check a and b signed bit
-    lw   a0, 4(sp)                         # load b
+    beq  a0, x0, 3f                         # if a is not zero, go to check a and b signed bit
+    lw   a0, 4(sp)                          # load b
     jal  ra, BF16_ISZERO
-    beq  a0, x0, 3f                        # if b is not zero, go to check a and b signed bit
-    jal  x0, 1f                            # both a and b are zero, go to Not Less
+    beq  a0, x0, 3f                         # if b is not zero, go to check a and b signed bit
+    jal  x0, 1f                             # both a and b are zero, go to Not Less
 
 1: # Not Less
-    addi a0, x0, 0                         # Not Less return 0
+    addi a0, x0, 0                          # Not Less return 0
     lw   ra, 8(sp)
     addi sp, sp, 12
     ret
 
 2: # Less
-    addi a0, x0, 1                         # Less return 1
+    addi a0, x0, 1                          # Less return 1
     lw   ra, 8(sp)
     addi sp, sp, 12
     ret
 
 3: # check a and b signed bit
-    lw   a0, 0(sp)                         # load a
-    lw   a1, 4(sp)                         # load b
-    srli  t0, a0, 15                       # t0 = sign_a
-    srli  t1, a1, 15                       # t1 = sign_b
-    bne  t0, t1, 4f                        # if sign_a != sign_b, go to sign bit compare
-    jal  x0, 5f                            # if sign_a == sign_b
+    lw   a0, 0(sp)                          # load a
+    lw   a1, 4(sp)                          # load b
+    srli  t0, a0, 15                        # t0 = sign_a
+    srli  t1, a1, 15                        # t1 = sign_b
+    bne  t0, t1, 4f                         # if sign_a != sign_b, go to sign bit compare
+    jal  x0, 5f                             # if sign_a == sign_b
 
 4: # signed bit compare
-    bgt  t0, t1, 2b                        # if sign_a > sign_b, go to Less
-    jal  x0, 1b                            # else go to Not Less
+    bgt  t0, t1, 2b                         # if sign_a > sign_b, go to Less
+    jal  x0, 1b                             # else go to Not Less
 
 5: # signed bit the same
-    beq  t0, x0, 7f                        # if a_sign == 0, go to both pos
-    jal  x0, 6f                            # if a_sign == 1, go to both neg
+    beq  t0, x0, 7f                         # if a_sign == 0, go to both pos
+    jal  x0, 6f                             # if a_sign == 1, go to both neg
 
 6: # both negative
-    bgt  a0, a1, 2b                        # if a > b, go to Less
-    jal  x0, 1b                            # else go to Not Less
+    bgt  a0, a1, 2b                         # if a > b, go to Less
+    jal  x0, 1b                             # else go to Not Less
 
 7: # both positive
-    blt  a0, a1, 2b                        # if a < b, go to Less
-    jal  x0, 1b                            # else go to Not Less
+    blt  a0, a1, 2b                         # if a < b, go to Less
+    jal  x0, 1b                             # else go to Not Less
 
 BF16_GT: # a0 = a, a1 = b, return 1 if a > b else 0
     mv   t0, a0
