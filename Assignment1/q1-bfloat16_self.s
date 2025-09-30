@@ -342,6 +342,174 @@ BF16_SUB:
     jal  x0, BF16_ADD
 
 BF16_MUL:
+    addi sp, sp, -12
+    sw   ra, 8(sp)
+    sw   a1, 4(sp)                          # 4(sp) = b
+    sw   a0, 0(sp)                          # 0(sp) = a                    
+
+    srli t1, a0, 15                         # t1 = sign_a
+    srli t2, a1, 15                         # t2 = sign_b
+    srli t3, a0, 7
+    srli t4, a1, 7
+    andi t3, t3, 0xFF                       # t3 = exp_a
+    andi t4, t4, 0xFF                       # t4 = exp_b
+    andi t5, a0, 0x7F                       # t5 = mant_a
+    andi t6, a1, 0x7F                       # t6 = mant_b
+    xor  a2, t1, t2                         # a2 = result_sign = sign_a ^ sign_b
+    addi t0, x0, 0xFF
+    beq  t3, t0, 1f                         # if exp_a == 0xFF, go to 1
+    jal  x0, CHECK_B
+
+1:
+    bne t5, x0, RETURN_A                    # if mant_a != 0, go to RETURN_A
+    beq t4, t0, 2f                          # if exp_b == 0, go to 2
+    jal x0, 3f                              # return inf
+
+
+2:  
+    beq t6, x0, RETURN_NAN                  # if mant_b == 0, go to RETURN_NAN
+    jal x0, 3f                              # return inf
+
+3:                                          # NAN
+    slli a0, a2, 15
+    li   t0, 0x7F80
+    or   a0, a0, t0
+    lw   ra, 8(sp)
+    addi sp, sp, 12
+    ret
+
+CHECK_B:
+    beq  t4, t0, 1f                         # if exp_b == 0xFF, go to 1
+    jal  x0, CHECK_ZERO
+
+1:
+    bne t6, x0, RETURN_B                    # if mant_b != 0, go to RETURN_B
+    beq t3, t0, 2f                          # if exp_a == 0, go to 2
+    jal x0, 3b                              # return inf
+
+
+2:  
+    beq t5, x0, RETURN_NAN                  # if mant_a == 0, go to RETURN_NAN
+    jal x0, 3b                              # return inf
+
+CHECK_ZERO:
+    beq t3, x0, CHECK_A_ZERO                # if exp_a == 0, check mant_a
+    beq t4, x0, CHECK_B_ZERO                # if exp_b == 0, check mant_b
+    jal  x0, CONT_MUL              
+
+CHECK_A_ZERO:
+    beq t5, x0, RETURN_ZERO_SIGN            # if mant_a == 0 -> return 0
+    jal  x0, CONT_MUL              
+
+CHECK_B_ZERO:
+    beq t6, x0, RETURN_ZERO_SIGN            # if mant_b == 0 -> return 0
+    jal  x0, CONT_MUL              
+
+RETURN_ZERO_SIGN:
+    slli a0, a2, 15                         # a0 = result_sign << 15
+    lw   ra, 8(sp)
+    addi sp, sp, 12
+    ret
+
+CONT_MUL:
+    addi a3, x0, 0                          # a3 = exp_adjust = 0    
+    beq  t3, x0, 1f                         # if exp_a == 0, go to 1
+    ori  t5, t5, 0x80                       # mant_a = mant_a | 0x80
+    jal  x0, 3f
+
+1: 
+    andi t0, t5, 0x80                       # t0 = mant_a & 0x80
+    beq  t0, x0, 2f                         # if mant_a & 0x80 == 0, go to 2    
+    addi t3, x0, 1                          # exp_a = 1
+    jal  x0, 3f
+
+2:
+    slli t5, t5, 1                          # mant_a = mant_a << 1
+    addi a3, a3, -1                         # exp_adjust = exp_adjust - 1
+    jal  x0, 1b                             # go to 1
+
+3: 
+    beq  t4, x0, 4f                         # if exp_b == 0, go to 4
+    ori  t6, t6, 0x80                       # mant_b = mant_b | 0x80
+    jal  x0, SHIFT_ADD
+
+4:  
+    andi t0, t6, 0x80                       # t0 = mant_b & 0x80
+    beq  t0, x0, 5f                         # if mant_b & 0x80 == 0, go to 5    
+    addi t4, x0, 1                          # exp_b = 1
+    jal  x0, SHIFT_ADD
+
+5:
+    slli t6, t6, 1                          # mant_b = mant_b << 1
+    addi a3, a3, -1                         # exp_adjust = exp_adjust - 1
+    jal  x0, 4b                             # go to 4
+
+SHIFT_ADD:
+    addi a4, x0, 0                          # a4 = result_mant = 0
+    addi t0, x0, 8                          # counter = 8 = mant_b 8-bit
+
+SHIFT_LOOP:
+    andi t1, t6, 1                          # t1 = mant_b & 1
+    beq  t1, x0, NO_ADD                     # if (mant_b & 1) == 0, skip add
+    add  a4, a4, t5                         # result_mant += mant_a
+
+NO_ADD:
+    slli t5, t5, 1                          # mant_a <<= 1
+    srli t6, t6, 1                          # mant_b >>= 1
+    addi t0, t0, -1                         # counter--
+    bne  t0, x0, SHIFT_LOOP                 # loop until counter = 0
+    add  a3, a3, t3                         
+    add  a3, a3, t4                         # result_exp = exp_a + exp_b + exp_adjust
+    addi a3, a3, -127                       # result_exp -= 127
+    li   t0, 0x8000
+    and  t0, t0, a4                     # t0 = result_mant & 0x8000
+    bne  t0, x0, 1f
+    srli a4, a4, 7                          # result_mant >>= 7
+    andi a4, a4, 0x7F                       # result_mant &= 0x7F
+    jal  x0, 2f  
+
+1:
+    srli a4, a4, 8                          # result_mant >>= 8
+    andi a4, a4, 0x7F                       # result_mant &= 0x7F
+    addi a3, a3, 1                          # result_exp++
+    
+2: #if (result_exp >= 0xFF)
+    addi t0, x0, 0xFF
+    beq  a3, t0, RETURN_INF                 # if result_exp == 0xFF, go to RETURN_INF
+    bgt  a3, t0, RETURN_INF                 # if result_exp > 0xFF, go to RETURN_INF
+    
+3:
+    beq  a3, x0, 4f                         # if result_exp == 0, go to 4
+    blt  a3, x0, 4f                         # if result_exp < 0, go to 4
+    jal  x0, RETURN_MUL
+
+4:
+    addi a0, x0, -6                         # a0 = -6
+    blt  a3, a0, RETURN_ZERO_SIGN           # if result_exp < -6, go to RETURN_ZERO_SIGN
+    addi a3, x0, 0                          # result_exp = 0
+    addi t0, x0, 1
+    sub  t0, t0, a3                         # t0 = 1 - result_exp
+    srl  a4, a4, t0                         # result_mant >>= (1 - result_exp)
+
+RETURN_INF:                                          #return (bf16_t) {.bits = (result_sign << 15) | 0x7F80};
+    slli a0, a2, 15
+    li   t0, 0x7F80
+    or   a0, a0, t0
+    lw   ra, 8(sp)
+    addi sp, sp, 12
+    ret
+
+RETURN_MUL:
+    slli a0, a2, 15                         # a0 = result_sign << 15
+    andi t0, a3, 0xFF
+    slli t0, t0, 7
+    or   a0, a0, t0                         # a0 = (result_sign << 15) | (result_exp << 7)
+    andi t0, a4, 0x7F
+    or   a0, a0, t0                         # a0 = (result_sign << 15) | (result_exp << 7) | result_mant
+    lw   ra, 8(sp)
+    addi sp, sp, 12
+    ret
+
 BF16_DIV:
 BF16_SQRT:
 
@@ -597,6 +765,16 @@ ARITHMETIC_TEST:
     jal  ra, BF16_SUB                       # a0 = a - b
     jal  ra, BF16_TO_F32
     lw   t0, 4(s3)                          # t0 = arithmeticResults[]
+    bne  a0, t0, ARITHMETIC_FAIL
+
+    lw   a0, 8(s2)
+    jal  ra, F32_TO_BF16
+    mv   a1, a0                             # a1 = bf16 of b
+    lw   a0, 8(s1)
+    jal  ra, F32_TO_BF16                    # a0 = bf16 of a
+    jal  ra, BF16_MUL                       # a0 = a * b
+    jal  ra, BF16_TO_F32
+    lw   t0, 8(s3)                          # t0 = arithmeticResults[]
     bne  a0, t0, ARITHMETIC_FAIL
 
     jal  x0, ARITHMETIC_ALL_PASS
