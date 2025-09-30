@@ -65,6 +65,7 @@ static inline bf16_t bf16_add(bf16_t a, bf16_t b)
             return (mant_b || sign_a == sign_b) ? b : BF16_NAN();
         return a;
     }
+    
     if (exp_b == 0xFF)
         return b;
     if (!exp_a && !mant_a)
