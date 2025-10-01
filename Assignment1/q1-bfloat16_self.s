@@ -52,6 +52,13 @@
                     .word 1, 0
                     .word 0, 0, 0
 
+    edge_caseOKmsg:   .string "Edge cases: PASS\n"
+    edge_caseFAILmsg: .string "Edge cases: FAIL\n"
+
+    edge_caseValues: .word 0x00000001, 0x7E967699, 0x006CE3EE
+
+    edge_caseResults: .word 0x00000000, 0x7F800000, 0x00000000
+
     roundingOKmsg:   .string "Rounding: PASS\n"
     roundingFAILmsg: .string "Rounding: FAIL\n"
 
@@ -60,11 +67,12 @@
 
 .text
 main:
-    jal ra, CONVERT_TEST
+    jal  ra, CONVERT_TEST
     jal  ra, SPECIAL_TEST
-    jal  ra, COMPARE_TEST
-    jal  ra, ROUNDING_TEST
     jal  ra, ARITHMETIC_TEST
+    jal  ra, COMPARE_TEST
+    jal  ra, EDGE_CASE_TEST
+    jal  ra, ROUNDING_TEST
     li   a7, 10
     ecall
 
@@ -1203,6 +1211,55 @@ COMPARE_ALL_PASS:
     addi sp, sp, 4
     ret
 
+EDGE_CASE_TEST:
+    addi sp, sp, -4
+    sw   ra, 0(sp)
+    addi s0, x0, 0
+    la   s1, edge_caseValues
+    la   s2, edge_caseResults
+
+    lw   a0, 0(s1)
+    jal  ra, F32_TO_BF16
+    lw   t0, 0(s2)
+    bne  a0, t0, EDGE_CASE_TEST_FAIL
+
+    #lw   a0, 4(s1)
+    #jal  ra, F32_TO_BF16
+    #mv   a1, a0
+    #li   a0, 0x41200000
+    #jal  ra, F32_TO_BF16
+    #jal  x0, BF16_MUL
+    #jal  ra, BF16_TO_F32
+    #lw   t0, 4(s2)
+    #bne  a0, t0, EDGE_CASE_TEST_FAIL
+
+    lw   a0, 8(s1)
+    jal  ra, F32_TO_BF16
+    mv   a1, a0
+    li   a0, 0x501502F9
+    jal  ra, F32_TO_BF16
+    jal  x0, BF16_DIV
+    jal  ra, BF16_TO_F32
+    lw   t0, 8(s2)
+    bne  a0, t0, EDGE_CASE_TEST_FAIL
+    jal  x0, EDGE_CASE_ALL_PASS
+
+EDGE_CASE_TEST_FAIL:
+    la   a0, edge_caseFAILmsg
+    li   a7, 4
+    ecall
+    lw   ra, 0(sp)
+    addi sp, sp, 4
+    ret
+
+EDGE_CASE_ALL_PASS:    
+    la   a0, edge_caseOKmsg
+    li   a7, 4
+    ecall
+    lw   ra, 0(sp)
+    addi sp, sp, 4
+    ret
+
 ROUNDING_TEST:
     addi sp, sp, -4
     sw   ra, 0(sp)
@@ -1212,14 +1269,14 @@ ROUNDING_TEST:
     addi s3, x0, 2
 
 ROUNDING_TEST_LOOP:
-    beq  s0, s3, ROUNDING_ALL_PASS          # if i == 2, all pass
-    slli s4, s0, 2                          # s4 = i * 4
-    add  s5, s1, s4                         # s5 = &roundingValues[i]
-    add  s6, s2, s4                         # s6 = &roundingResults[i]
-    lw   a0, 0(s5)                          # a0 = roundingValues[i]
-    lw   s7, 0(s6)                          # s7 = roundingResults[i]
-    jal  ra, F32_TO_BF16                    # convert to bf16
-    jal  ra, BF16_TO_F32                    # convert back to f32
+    beq  s0, s3, ROUNDING_ALL_PASS  
+    slli s4, s0, 2             
+    add  s5, s1, s4                      
+    add  s6, s2, s4                      
+    lw   a0, 0(s5)                      
+    lw   s7, 0(s6)                        
+    jal  ra, F32_TO_BF16 
+    jal  ra, BF16_TO_F32
     bne  a0, s7, ROUNDING_FAIL
     addi s0, s0, 1
     jal  x0, ROUNDING_TEST_LOOP
