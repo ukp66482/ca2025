@@ -221,20 +221,20 @@ static inline bf16_t bf16_div(bf16_t a, bf16_t b)
         /* Inf/Inf = NaN */
         if (exp_a == 0xFF && !mant_a)
             return BF16_NAN();
-        return (bf16_t) {.bits = result_sign << 15};
+        return (bf16_t) {.bits = result_sign << 15}; //zero
     }
     if (!exp_b && !mant_b) {
         if (!exp_a && !mant_a)
             return BF16_NAN();
-        return (bf16_t) {.bits = (result_sign << 15) | 0x7F80};
+        return (bf16_t) {.bits = (result_sign << 15) | 0x7F80}; //inf
     }
     if (exp_a == 0xFF) {
         if (mant_a)
             return a;
-        return (bf16_t) {.bits = (result_sign << 15) | 0x7F80};
+        return (bf16_t) {.bits = (result_sign << 15) | 0x7F80}; //inf
     }
     if (!exp_a && !mant_a)
-        return (bf16_t) {.bits = result_sign << 15};
+        return (bf16_t) {.bits = result_sign << 15}; //zero
 
     if (exp_a)
         mant_a |= 0x80;
