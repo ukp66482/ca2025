@@ -234,7 +234,7 @@ static inline bf16_t bf16_div(bf16_t a, bf16_t b)
         return (bf16_t) {.bits = (result_sign << 15) | 0x7F80}; //inf
     }
     if (!exp_a && !mant_a)
-        return (bf16_t) {.bits = result_sign << 15}; //zero
+        return (bf16_t) {.bits = result_sign << 15}; //
 
     if (exp_a)
         mant_a |= 0x80;
