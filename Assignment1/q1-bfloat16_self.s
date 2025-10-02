@@ -496,7 +496,7 @@ NO_ADD:
     sub  t0, t0, a3                         # t0 = 1 - result_exp
     srl  a4, a4, t0                         # result_mant >>= (1 - result_exp)
 
-RETURN_INF:                                          #return (bf16_t) {.bits = (result_sign << 15) | 0x7F80};
+RETURN_INF:                                 #return (bf16_t) {.bits = (result_sign << 15) | 0x7F80};
     slli a0, a2, 15
     li   t0, 0x7F80
     or   a0, a0, t0
@@ -504,7 +504,7 @@ RETURN_INF:                                          #return (bf16_t) {.bits = (
     addi sp, sp, 12
     ret
 
-RETURN_MUL:
+RETURN_MUL:                                 
     slli a0, a2, 15                         # a0 = result_sign << 15
     andi t0, a3, 0xFF
     slli t0, t0, 7
@@ -515,7 +515,7 @@ RETURN_MUL:
     addi sp, sp, 12
     ret
 
-BF16_DIV:
+BF16_DIV:   # a0 is dividend, a1 is divisor
     addi sp, sp, -12
     sw   ra, 8(sp)
     sw   a1, 4(sp)                          # 4(sp) = b
@@ -1223,22 +1223,22 @@ EDGE_CASE_TEST:
     lw   t0, 0(s2)
     bne  a0, t0, EDGE_CASE_TEST_FAIL
 
-    #lw   a0, 4(s1)
-    #jal  ra, F32_TO_BF16
-    #mv   a1, a0
-    #li   a0, 0x41200000
-    #jal  ra, F32_TO_BF16
-    #jal  x0, BF16_MUL
-    #jal  ra, BF16_TO_F32
-    #lw   t0, 4(s2)
-    #bne  a0, t0, EDGE_CASE_TEST_FAIL
-
-    lw   a0, 8(s1)
+    lw   a0, 4(s1)
     jal  ra, F32_TO_BF16
     mv   a1, a0
+    li   a0, 0x41200000
+    jal  ra, F32_TO_BF16
+    jal  ra, BF16_MUL
+    jal  ra, BF16_TO_F32
+    lw   t0, 4(s2)
+    bne  a0, t0, EDGE_CASE_TEST_FAIL
+
     li   a0, 0x501502F9
     jal  ra, F32_TO_BF16
-    jal  x0, BF16_DIV
+    mv   a1, a0
+    lw   a0, 8(s1)
+    jal  ra, F32_TO_BF16
+    jal  ra, BF16_DIV
     jal  ra, BF16_TO_F32
     lw   t0, 8(s2)
     bne  a0, t0, EDGE_CASE_TEST_FAIL
