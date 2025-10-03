@@ -1,9 +1,17 @@
 .data
-    TEST_DATA:   .word  14, 8, 123   
-    TEST_RESULT: .word  6, 4, 12
+    TEST_DATA:   .word  0, 1, 2, 3, 4,
+                 .word  7, 8, 14, 15, 16,
+                 .word  31, 32, 63, 64, 123,
+                 .word  255, 256, 1023, 1024, 0xFFFFFFFF  
+    
+    TEST_RESULT: .word  0, 1, 2, 3, 3, 
+                 .word  5, 4, 6, 7, 5, 
+                 .word  9, 6, 11, 7, 12, 
+                 .word  15, 9, 19, 11, 63
+    
     TEST_OK_MSG: .string "All test cases passed!\n"
+    
     TEST_FAIL_MSG: .string "Test case failed!\n"
-
 .text
 
 main:
@@ -22,7 +30,7 @@ TEST:
     sw   ra, 0(sp)                          # save return address
     la   s0, TEST_DATA
     la   s1, TEST_RESULT    
-    li   s2, 3                              # number of test cases
+    li   s2, 20                              # number of test cases
     li   s3, 0                              # current test case index
 
 TEST_LOOP:

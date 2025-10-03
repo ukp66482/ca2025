@@ -3,6 +3,13 @@ newline: .string "\n"
 okmsg:   .string "All tests passed.\n"
 
 .text
+
+#////////////////////////////////////////////
+#
+#   Test for UF8_ENCODE and UF8_DECODE
+#   (exhaustive for all 256 possible inputs)
+#
+#////////////////////////////////////////////
 main:
     addi a3, x0, 0                          # i = 0
     addi a4, x0, 256                        # limit = 256
