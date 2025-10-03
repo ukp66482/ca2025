@@ -11,6 +11,12 @@ main:
     li  a7, 10
     ecall
 
+
+#////////////////////////////////////////////
+#
+#   TEST Function
+#
+#////////////////////////////////////////////
 TEST:
     addi sp, sp, 4
     sw   ra, 0(sp)                          # save return address
@@ -46,7 +52,13 @@ TEST_FAIL:
     addi sp, sp, 4
     ret
 
-# input a0 = num, output a0 = steps
+#////////////////////////////////////////////
+#
+#   numberOfSteps Function
+#
+#   input: a0 = num, output: a0 = steps
+#
+#////////////////////////////////////////////
 NUMBEROFSTEPS:
     addi sp, sp, -4
     sw   ra, 0(sp)                          # save return address
@@ -67,7 +79,13 @@ RETURN_ZERO:
     addi a0, x0, 0                          # steps = 0
     ret
 
-# input a0 = x, output a0 = original x, a1 = clz result
+#////////////////////////////////////////////
+#
+#   CLZ Function
+#
+#   input a0 = x, output a0 = orig x, a1 = clz_result
+#
+#////////////////////////////////////////////
 CLZ:
     addi sp, sp, -8
     sw   ra, 0(sp)
@@ -90,7 +108,13 @@ CLZ_LOWER:
     addi sp, sp, 8
     ret
 
-# input a0, output a0 = popcount result
+#////////////////////////////////////////////
+#
+#   POPCOUNT Function
+#
+#   input a0 = x, output a0 = popcount result
+#
+#////////////////////////////////////////////
 POPCOUNT:               
     li   t1, 0x55555555                     # t1 = 0x55555555
     and  t2, a0, t1                         # t2 = u & 0x55555555
