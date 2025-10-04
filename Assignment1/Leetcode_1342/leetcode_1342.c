@@ -1,7 +1,5 @@
 #include <stdio.h>
 
-
-
 /*unsigned popcount (unsigned u)
 {
     u = (u & 0x55555555) + ((u >> 1) & 0x55555555);

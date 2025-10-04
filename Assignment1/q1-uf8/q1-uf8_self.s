@@ -52,7 +52,7 @@ EXIT:
 #
 #   CLZ Function
 #
-#   input a0 = x, output a0 = clz_result, a1 = original x
+#   input a0 = x, return a0 = clz_result, a1 = original x
 #
 #////////////////////////////////////////////
 CLZ:
@@ -108,7 +108,7 @@ UF8_DECODE:
 #
 #   UF8_ENCODE Function
 #
-#   input a0 = x, output a0 = encode_result
+#   input a0 = x, return a0 = encode_result
 #
 #////////////////////////////////////////////
 UF8_ENCODE:

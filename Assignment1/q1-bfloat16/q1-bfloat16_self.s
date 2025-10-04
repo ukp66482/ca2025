@@ -1,9 +1,9 @@
 .data
-    BF16_SIGN_MASK: .word 0x8000
-    BF16_EXP_MASK:  .word 0x7F80
-    BF16_MANT_MASK: .word 0x007F
-    BF16_EXP_BIAS:  .word 127
-    BF16_ALL_MASK:  .word 0x7FFF
+    BF16_SIGN_MASK: .equ 0x8000
+    BF16_EXP_MASK:  .equ 0x7F80
+    BF16_MANT_MASK: .equ 0x007F
+    BF16_EXP_BIAS:  .equ 127
+    BF16_ALL_MASK:  .equ 0x7FFF
     
     convertOKmsg:   .string "Basic conversions: PASS\n"
     convertFAILmsg: .string "Basic conversions: FAIL\n"
@@ -76,6 +76,14 @@ main:
     li   a7, 10
     ecall
 
+
+#////////////////////////////////////////////   
+#
+#   BF16_EXP_ALL1 function
+#
+#   input: a0 = x, return 1 if exponent is all 1 else 0
+#
+#////////////////////////////////////////////
 BF16_EXP_ALL1:
     addi sp, sp, -8
     sw   ra, 4(sp)
@@ -95,12 +103,19 @@ BF16_EXP_NOTALL1:
     addi sp, sp, 8
     ret
 
+
+#////////////////////////////////////////////   
+#
+#   BF16_MANT_NOT0 function
+#
+#   input: a0 = x, return 1 if mantissa is not 0 else 0
+#
+#////////////////////////////////////////////
 BF16_MANT_NOT0:
     addi sp, sp, -8
     sw   ra, 4(sp)
     sw   a0, 0(sp)
-    la   t0, BF16_MANT_MASK
-    lw   t0, 0(t0)                          # t0 = BF16_MANT_MASK
+    li   t0, BF16_MANT_MASK                 # t0 = BF16_MANT_MASK
     and  t1, a0, t0                         # t1 = a0 & BF16_MANT_MASK
     beq  t1, x0, BF16_MANT0
     addi a0, x0, 1                          # mantissa is not 0 return 1
@@ -114,6 +129,13 @@ BF16_MANT0:
     addi a0, x0, 0                          # mantissa is 0 return 0
     ret
 
+#////////////////////////////////////////////   
+#
+#   BF16_ISNAN function
+#
+#   input: a0 = x, return 1 if x is NaN else 0
+#
+#////////////////////////////////////////////
 BF16_ISNAN:
     addi sp, sp, -8
     sw   ra, 4(sp)
@@ -134,6 +156,13 @@ BF16_NOTNAN:
     addi sp, sp, 8
     ret
 
+#////////////////////////////////////////////   
+#
+#   BF16_ISINF function
+#
+#   input: a0 = x, return 1 if x is Inf else 0
+#
+#////////////////////////////////////////////
 BF16_ISINF:
     addi sp, sp, -8
     sw   ra, 4(sp)
@@ -154,12 +183,18 @@ BF16_NOTINF:
     addi sp, sp, 8
     ret
 
+#////////////////////////////////////////////   
+#
+#   BF16_ISZERO function
+#
+#   input: a0 = x, return 1 if x is zero else 0
+#
+#////////////////////////////////////////////
 BF16_ISZERO:
     addi sp, sp, -8
     sw   ra, 4(sp)
     sw   a0, 0(sp)
-    la   t0, BF16_ALL_MASK
-    lw   t0, 0(t0)                          # t0 = BF16_ALL_MASK
+    li   t0, BF16_ALL_MASK
     and  t1, a0, t0                         # t1 = a0 & BF16_ALL_MASK
     bne  t1, x0, BF16_NOTZERO               # if (a0 & BF16_ALL_MASK) != 0, go to NOTZERO
     addi a0, x0, 1                          # is zero return 1
@@ -173,6 +208,14 @@ BF16_NOTZERO:
     addi sp, sp, 8
     ret
 
+#////////////////////////////////////////////   
+#
+#   BF16_ADD function
+#
+#   input: a0 = a, a1 = b
+#   return: a0 = a + b
+#
+#////////////////////////////////////////////
 BF16_ADD:
     addi sp, sp, -12
     sw   ra, 8(sp)
@@ -271,7 +314,7 @@ ADD_SAME_SIGN:
 
 2:  
     slli a0, a2, 15                         # return (bf16_t) {.bits = (result_sign << 15) | 0x7F80};
-    li   t0, 0x7F80
+    li   t0, BF16_EXP_MASK
     or   a0, a0, t0
     lw   ra, 8(sp)
     addi sp, sp, 12
@@ -341,11 +384,27 @@ RETURN_ADD:
     addi sp, sp, 12
     ret
 
+#////////////////////////////////////////////   
+#
+#   BF16_SUB function
+#
+#   input: a0 = a, a1 = b
+#   return: a0 = a - b
+#
+#////////////////////////////////////////////
 BF16_SUB:
-    li   t0, 0x8000
+    li   t0, BF16_SIGN_MASK
     xor  a1, a1, t0                        # b = b ^ 0x8000
     jal  x0, BF16_ADD
 
+#////////////////////////////////////////////   
+#
+#   BF16_MUL function
+#
+#   input: a0 = a, a1 = b
+#   return: a0 = a * b
+#
+#////////////////////////////////////////////
 BF16_MUL:
     addi sp, sp, -12
     sw   ra, 8(sp)
@@ -377,7 +436,7 @@ BF16_MUL:
 
 3:                                          # NAN
     slli a0, a2, 15
-    li   t0, 0x7F80
+    li   t0, BF16_EXP_MASK
     or   a0, a0, t0
     lw   ra, 8(sp)
     addi sp, sp, 12
@@ -465,8 +524,8 @@ NO_ADD:
     bne  t0, x0, SHIFT_LOOP                 # loop until counter = 0
     add  a3, a3, t3                         
     add  a3, a3, t4                         # result_exp = exp_a + exp_b + exp_adjust
-    addi a3, a3, -127                       # result_exp -= 127
-    li   t0, 0x8000
+    addi a3, a3, -BF16_EXP_BIAS             # result_exp -= 127
+    li   t0, BF16_SIGN_MASK
     and  t0, t0, a4                         # t0 = result_mant & 0x8000
     bne  t0, x0, 1f
     srli a4, a4, 7                          # result_mant >>= 7
@@ -498,7 +557,7 @@ NO_ADD:
 
 RETURN_INF:                                 #return (bf16_t) {.bits = (result_sign << 15) | 0x7F80};
     slli a0, a2, 15
-    li   t0, 0x7F80
+    li   t0, BF16_EXP_MASK
     or   a0, a0, t0
     lw   ra, 8(sp)
     addi sp, sp, 12
@@ -515,7 +574,15 @@ RETURN_MUL:
     addi sp, sp, 12
     ret
 
-BF16_DIV:   # a0 is dividend, a1 is divisor
+#////////////////////////////////////////////   
+#
+#   BF16_DIV function
+#
+#   input: a0 = a (dividend), a1 = b (divisor)
+#   return: a0 = a / b
+#
+#////////////////////////////////////////////
+BF16_DIV:
     addi sp, sp, -12
     sw   ra, 8(sp)
     sw   a1, 4(sp)                          # 4(sp) = b
@@ -607,7 +674,7 @@ DIV_END:
     srli t3, a0, 7
     andi t3, t3, 0xFF                       # t3 = exp_a
     sub  a3, t3, t4                         # a3 = exp_a - exp_b
-    addi a3, a3, 127                        # a3 = result_exp = exp_a - exp_b + 127
+    addi a3, a3, -BF16_EXP_BIAS             # a3 = result_exp = exp_a - exp_b + 127
     beq  t3, x0, 1f                         # if exp_a == 0, go to 1
 
 2: 
@@ -622,7 +689,7 @@ DIV_END:
     addi a3, a3, 1                          # result_exp++
 
 DIV_EXP_DONE:
-    li   t0, 0x8000
+    li   t0, BF16_SIGN_MASK
     and  t1, t6, t0                         # quotient & 0x8000
     bne  t1, x0, DIV_SHIFT_DONE
 3:
@@ -659,6 +726,13 @@ RETURN_DIV:
     addi sp, sp, 12
     ret
 
+#////////////////////////////////////////////   
+#
+#   BF16_SQRT function
+#
+#   input: a0(old), return: a0(result)
+#
+#////////////////////////////////////////////
 BF16_SQRT:
     addi sp, sp, -8
     sw   ra, 4(sp)
@@ -687,7 +761,7 @@ BF16_SQRT:
     bne  t1, x0, RETURN_NAN_SQRT            # if sign != 0, go to RETURN_NAN_SQRT
     beq  t2, x0, RETURN_ZERO_SQRT           # if exp == 0, go to RETURN_ZERO_SQRT
 
-    addi t0, x0, 127
+    addi t0, x0, BF16_EXP_BIAS
     sub  t2, t2, t0                         # t2 = e = exp - 127
     ori  t3, t3, 0x80                       # t3 = m = mant | 0x80
     andi t4, t2, 1                          # t4 = e & 1
@@ -697,11 +771,11 @@ BF16_SQRT:
     slli t3, t3, 1                          # t3 = m = mant << 1
     addi t2, t2, -1                         # e = e - 1
     srli t2, t2, 1                          # e = e >> 1
-    addi t2, t2, 127                        # t2 = new_exp = e + 127
+    addi t2, t2, BF16_EXP_BIAS              # t2 = new_exp = e + 127
     jal  x0, ADJUST_DONE
 2:  
     srli t2, t2, 1                          # e = e >> 1
-    addi t2, t2, 127                        # t2 = new_exp = e + 127
+    addi t2, t2, BF16_EXP_BIAS              # t2 = new_exp = e + 127
 
 ADJUST_DONE:
     # t3 = m, t2 = new_exp, t1 = sign
@@ -785,7 +859,7 @@ BS_END:
     ret
 
 RETURN_INF_SQRT:                            #return (bf16_t) {.bits = (sign << 15) | 0x7F80};
-    li   a0, 0x7F80
+    li   a0, BF16_EXP_MASK
     lw   ra, 4(sp)
     addi sp, sp, 8
     ret
@@ -808,7 +882,13 @@ RETURN_ZERO_SQRT:
     addi sp, sp, 8
     ret
 
-
+#////////////////////////////////////////////   
+#
+#   BF16_Equal function
+#
+#   input: a0 = a, a1 = b, return 1 if a == b else 0
+#
+#////////////////////////////////////////////
 BF16_EQ: # a0 = a, a1 = b, a0 return 1 if a == b else 0
     addi sp, sp, -12
     sw   ra, 8(sp)
@@ -845,7 +925,14 @@ BF16_EQ: # a0 = a, a1 = b, a0 return 1 if a == b else 0
     beq  a0, a1, 2b                         # if a == b, go to Equal
     jal  x0, 1b                             # else go to Not Equal
 
-BF16_LT: # a0 = a, a1 = b, return 1 if a < b else 0
+#////////////////////////////////////////////   
+#
+#   BF16_Less_Than function
+#
+#   input: a0 = a, a1 = b, return 1 if a < b else 0
+#
+#////////////////////////////////////////////
+BF16_LT:
     addi sp, sp, -12
     sw   ra, 8(sp)
     sw   a1, 4(sp)                          # 4(sp) = b
@@ -899,13 +986,28 @@ BF16_LT: # a0 = a, a1 = b, return 1 if a < b else 0
     blt  a0, a1, 2b                         # if a < b, go to Less
     jal  x0, 1b                             # else go to Not Less
 
+
+#////////////////////////////////////////////   
+#
+#   BF16_Greater_Than function
+#
+#   input: a0 = a, a1 = b, return 1 if a > b else 0
+#
+#////////////////////////////////////////////
 BF16_GT: # a0 = a, a1 = b, a0 return 1 if a > b else 0
     mv   t0, a0
     mv   a0, a1
     mv   a1, t0
     jal  x0, BF16_LT
-   
-F32_TO_BF16: # a0 = f32bits, return bf16 bits in a0
+
+#////////////////////////////////////////////   
+#
+#   F32_TO_BF16 function
+#
+#   input: a0 = f32 bits, return bf16 bits in a0
+#
+#////////////////////////////////////////////
+F32_TO_BF16:
     addi sp, sp, -8
     sw   ra, 4(sp)
     sw   a0, 0(sp)
@@ -917,7 +1019,7 @@ F32_TO_BF16: # a0 = f32bits, return bf16 bits in a0
     srli t0, a0, 16                         # t0 = f32bits >> 16
     andi t0, t0, 1                          # t0 = (f32bits >> 16) & 1 = tmp
     add  a0, a0, t0                         # a0 = f32bits + tmp
-    li   t1, 0x7FFF                         # t1 = 0x7FFF
+    li   t1, BF16_ALL_MASK                  # t1 = 0x7FFF
     add  a0, a0, t1                         # a0 = f32bits + tmp + 0x7FFF
     srli a0, a0, 16                         # a0 = f32bits >> 16
     lw   ra, 4(sp)             
@@ -930,7 +1032,14 @@ F32_TO_BF16_INF_NAN:
     addi sp, sp, 8
     ret   
 
-BF16_TO_F32: # a0 = bf16 bits, return f32 bits in a0
+#////////////////////////////////////////////   
+#
+#   BF16_TO_F32 function
+#
+#   input: a0 = bf16 bits, return f32 bits in a0
+#
+#////////////////////////////////////////////
+BF16_TO_F32:
     addi sp, sp, -8
     sw   ra, 4(sp)
     sw   a0, 0(sp)
