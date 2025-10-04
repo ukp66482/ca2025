@@ -1,10 +1,9 @@
 .data
-    BF16_SIGN_MASK: .equ 0x8000
-    BF16_EXP_MASK:  .equ 0x7F80
-    BF16_MANT_MASK: .equ 0x007F
-    BF16_EXP_BIAS:  .equ 127
-    BF16_ALL_MASK:  .equ 0x7FFF
-    
+    .equ BF16_SIGN_MASK, 0x8000
+    .equ BF16_EXP_MASK, 0x7F80
+    .equ BF16_MANT_MASK, 0x007F
+    .equ BF16_EXP_BIAS, 127
+    .equ BF16_ALL_MASK, 0x7FFF
     convertOKmsg:   .string "Basic conversions: PASS\n"
     convertFAILmsg: .string "Basic conversions: FAIL\n"
     
@@ -88,8 +87,7 @@ BF16_EXP_ALL1:
     addi sp, sp, -8
     sw   ra, 4(sp)
     sw   a0, 0(sp)
-    la   t0, BF16_EXP_MASK
-    lw   t0, 0(t0)                          # t0 = BF16_EXP_MASK
+    li   t0, BF16_EXP_MASK
     and  t1, a0, t0                         # t1 = a0 & BF16_EXP_MASK
     bne  t1, t0, BF16_EXP_NOTALL1           # if (a0 & BF16_EXP_MASK) != BF16_EXP_MASK, go to NOTALL1
     addi a0, x0, 1                          # exponent is all 1 return 1
@@ -674,7 +672,7 @@ DIV_END:
     srli t3, a0, 7
     andi t3, t3, 0xFF                       # t3 = exp_a
     sub  a3, t3, t4                         # a3 = exp_a - exp_b
-    addi a3, a3, -BF16_EXP_BIAS             # a3 = result_exp = exp_a - exp_b + 127
+    addi a3, a3, BF16_EXP_BIAS             # a3 = result_exp = exp_a - exp_b + 127
     beq  t3, x0, 1f                         # if exp_a == 0, go to 1
 
 2: 
