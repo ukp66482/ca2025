@@ -4,71 +4,191 @@
     .equ BF16_MANT_MASK, 0x007F
     .equ BF16_EXP_BIAS, 127
     .equ BF16_ALL_MASK, 0x7FFF
-    convertOKmsg:   .string "Basic conversions: PASS\n"
-    convertFAILmsg: .string "Basic conversions: FAIL\n"
-    
-    convert_FP32:   .word 0x00000000, 0x3F800000, 0xBF800000, 0x40000000 
-                    .word 0xC0000000, 0x3F000000, 0xBF000000, 0x40490FD0
-                    .word 0xC0490FD0, 0x501502F9, 0xD01502F9 
 
-    convert_BF16:   .word 0x0000, 0x3F80, 0xBF80, 0x4000
-                    .word 0xC000, 0x3F00, 0xBF00, 0x4049
-                    .word 0xC049, 0x5015, 0xD015
+    convertOKmsg:       .string "Basic conversions: PASS\n"
+    convertFAILmsg:     .string "Basic conversions: FAIL\n"
+    arithmeticOKmsg:    .string "Arithmetic: PASS\n"
+    arithmeticFAILmsg:  .string "Arithmetic: FAIL\n"
+    specialOKmsg:       .string "Special values: PASS\n"
+    specialFAILmsg:     .string "Special values: FAIL\n"
+    compareOKmsg:       .string "Comparisons: PASS\n"
+    compareFAILmsg:     .string "Comparisons: FAIL\n"
+    edge_caseOKmsg:     .string "Edge cases: PASS\n"
+    edge_caseFAILmsg:   .string "Edge cases: FAIL\n"
+    roundingOKmsg:      .string "Rounding: PASS\n"
+    roundingFAILmsg:    .string "Rounding: FAIL\n"
 
-    converted_FP32: .word 0x00000000, 0x3F800000, 0xBF800000, 0x40000000
-                    .word 0xC0000000, 0x3F000000, 0xBF000000, 0x40490000
-                    .word 0xC0490000, 0x50150000, 0xD0150000
+    .equ NUM_ADD_TESTS, 11
+    .equ NUM_SUB_TESTS, 3
+    .equ NUM_MUL_TESTS, 4
+    .equ NUM_DIV_TESTS, 7
+    .equ NUM_SQRT_TESTS, 3
 
-    specialOKmsg:   .string "Special values: PASS\n"
-    specialFAILmsg: .string "Special values: FAIL\n"
-    
-    specialValues:  .word 0x7F80, 0xFF80, 0x7FC0, 0x0000, 0x8000
-    
-    specialResults: .word 0, 1, 0
-                    .word 0, 1, 0
-                    .word 1, 0, 0
-                    .word 0, 0, 1
-                    .word 0, 0, 1
+    convert_FP32:   
+        .word 0x00000000                    # 0.0
+        .word 0x3F800000                    # 1.0
+        .word 0xBF800000                    # -1.0
+        .word 0x40000000                    # 2.0
+        .word 0xC0000000                    # -2.0
+        .word 0x3F000000                    # 0.5   
+        .word 0xBF000000                    # -0.5
+        .word 0x40490FD0                    # 3.14159
+        .word 0xC0490FD0                    # -3.14159
+        .word 0x501502F9                    # 1e10
+        .word 0xD01502F9                    # -1e10
 
-    arithmeticOKmsg:   .string "Arithmetic: PASS\n"
-    arithmeticFAILmsg: .string "Arithmetic: FAIL\n"
+    convert_BF16:   
+        .word 0x0000                        # 0.0
+        .word 0x3F80                        # 1.0
+        .word 0xBF80                        # -1.0
+        .word 0x4000                        # 2.0
+        .word 0xC000                        # -2.0
+        .word 0x3F00                        # 0.5
+        .word 0xBF00                        # -0.5
+        .word 0x4049                        # 3.14159
+        .word 0xC049                        # -3.14159
+        .word 0x5015                        # 1e10
+        .word 0xD015                        # -1e10
 
-    arithmeticValues_a: .word 0x3F800000, 0x40000000, 0x40400000, 0x41200000
-                        .word 0x40800000, 0x41100000
-                        
-    arithmeticValues_b: .word 0x40000000, 0x3F800000, 0x40800000, 0x40000000
+    converted_FP32: 
+        .word 0x00000000                    # 0.0
+        .word 0x3F800000                    # 1.0
+        .word 0xBF800000                    # -1.0
+        .word 0x40000000                    # 2.0
+        .word 0xC0000000                    # -2.0
+        .word 0x3F000000                    # 0.5
+        .word 0xBF000000                    # -0.5
+        .word 0x40490000                    # 3.14159
+        .word 0xC0490000                    # -3.14159
+        .word 0x50150000                    # 1e10
+        .word 0xD0150000                    # -1e10
 
-    arithmeticResults: .word 0x40400000, 0x3F800000, 0x41400000, 0x40A00000
-                       .word 0x40000000, 0x40400000
+    specialValues:  
+        .word 0x7F80                        # +Inf 
+        .word 0xFF80                        # -Inf
+        .word 0x7FC0                        #  NaN
+        .word 0x0000                        #  0.0
+        .word 0x8000                        # -0.0
 
-    compareOKmsg:   .string "Comparisons: PASS\n"
-    compareFAILmsg: .string "Comparisons: FAIL\n"
+    specialResults: 
+        .word 0, 1, 0                       # +Inf is not NaN, is Inf and not zero
+        .word 0, 1, 0                       # -Inf is not NaN, is Inf and not zero
+        .word 1, 0, 0                       #  NaN is NaN, not Inf and not zero
+        .word 0, 0, 1                       #  0.0 is not NaN, not Inf and is zero
+        .word 0, 0, 1                       # -0.0 is not NaN, not Inf and is zero
 
-    compareValues:  .word 0x3F800000, 0x40000000, 0x3F800000, 0x7FC0
+    add_test_input:
+        .word   0x3f80, 0x4000              #  1.0 + 2.0
+        .word   0x4049, 0x402e              #  3.140625 + 2.71875
+        .word   0x3f80, 0xc000              #  1.0 + -2.0
+        .word   0xc000, 0x3f80              # -2.0 + 1.0
+        .word   0x0000, 0x3f80              #  0.0 + 1.0
+        .word   0x3f80, 0x0000              #  1.0 + 0.0
+        .word   0x7f80, 0x3f80              # +Inf + 1.0
+        .word   0x3f80, 0x7f80              #  1.0 + +Inf
+        .word   0xff80, 0x3f80              # -inf + 1.0
+        .word   0x3f80, 0xff80              #  1.0 + -inf
+        .word   0x7f62, 0x7f62              #  3e38 + 3e38 (f32 to bf16)
 
-    compareResults: .word 1, 0
-                    .word 1, 0, 0
-                    .word 1, 0
-                    .word 0, 0, 0
+    add_test_output:
+        .word   0x4040                      #  3.0
+        .word   0x40bb                      #  5.84375
+        .word   0xbf80                      # -1.0
+        .word   0xbf80                      # -1.0
+        .word   0x3f80                      #  1.0
+        .word   0x3f80                      #  1.0
+        .word   0x7f80                      # +Inf
+        .word   0x7f80                      # +Inf
+        .word   0xff80                      # -Inf
+        .word   0xff80                      # -Inf
+        .word   0x7f80                      # +Inf
 
-    edge_caseOKmsg:   .string "Edge cases: PASS\n"
-    edge_caseFAILmsg: .string "Edge cases: FAIL\n"
+    sub_test_input:
+        .word   0x4000, 0x3f80              #  2.0 - 1.0
+        .word   0x4049, 0x402e              #  3.140625 - 2.71875
+        .word   0x3f80, 0xc000              #  1.0 - -2.0
 
-    edge_caseValues: .word 0x00000001, 0x7E967699, 0x006CE3EE
+    sub_test_output:
+        .word   0x3f80                      #  1.0
+        .word   0x3ed8                      #  0.421875
+        .word   0x4040                      #  3.0
 
-    edge_caseResults: .word 0x00000000, 0x7F800000, 0x00000000
+    mul_test_input:
+        .word   0x4040, 0x4080              #  3.0 * 4.0
+        .word   0x4049, 0x402e              #  3.140625 * 2.71875
+        .word   0x7f80, 0x3f80              # +Inf * 1.0
+        .word   0x7f80, 0x0000              # +Inf * 0.0
 
-    roundingOKmsg:   .string "Rounding: PASS\n"
-    roundingFAILmsg: .string "Rounding: FAIL\n"
+    mul_test_output:
+        .word   0x4140                      #  12.0
+        .word   0x4108                      #  8.5
+        .word   0x7f80                      # +Inf
+        .word   0x7fc0                      #  NaN
 
-    roundingValues:  .word 0x3FC00000, 0x3F800347
-    roundingResults: .word 0x3FC00000, 0x3F800000
+    div_test_input:
+        .word   0x4120, 0x4000              #  10.0 / 2.0
+        .word   0xc120, 0x4000              # -10.0 / 2.0
+        .word   0x4128, 0x3f00              #  10.5 / 0.5
+        .word   0x7f80, 0x7f80              # +Inf / +Inf
+        .word   0x3f80, 0x7f80              #  1.0 / +Inf
+        .word   0x7f80, 0x3f80              # +Inf / 1.0
+        .word   0x3f80, 0x0000              #  1.0 / 0.0
+
+    div_test_output:
+        .word  0x40a0                       #  5.0
+        .word  0xc0a0                       # -5.0
+        .word  0x41a8                       # 21.0
+        .word  0x7fc0                       #  NaN
+        .word  0x0000                       #  0.0
+        .word  0x7f80                       # +Inf
+        .word  0x7f80                       # +Inf
+
+    sqrt_test_input:
+        .word  0x4080                       # 4.0
+        .word  0x4110                       # 9.0
+        .word  0x42a2                       # 81.0
+
+    sqrt_test_output:
+        .word  0x4000                       # 2.0
+        .word  0x4040                       # 3.0
+        .word  0x4110                       # 9.0
+
+
+    compareValues:  
+        .word 0x3F800000                    # 1.0
+        .word 0x40000000                    # 2.0
+        .word 0x3F800000                    # 1.0
+        .word 0x7FC0                        # +Inf
+
+    compareResults: 
+        .word 1, 0
+        .word 1, 0, 0
+        .word 1, 0
+        .word 0, 0, 0
+
+    edge_caseValues: 
+        .word 0x00000001                    # 1e-45
+        .word 0x7E967699                    # 1e+38
+        .word 0x006CE3EE                    # 1e-38
+
+    edge_caseResults: 
+        .word 0x00000000                    # 0
+        .word 0x7F800000                    # +Inf
+        .word 0x00000000                    # 0
+
+    roundingValues:  
+        .word 0x3FC00000                    # 1.5
+        .word 0x3F800347                    # 1.0001
+
+    roundingResults: 
+        .word 0x3FC00000                    # 1.5
+        .word 0x3F800000                    # 1.0
 
 .text
 main:
     jal  ra, CONVERT_TEST
     jal  ra, SPECIAL_TEST
-    jal  ra, ARITHMETIC_TEST
+    jal  ra, ARITHMETIC_TESTS
     jal  ra, COMPARE_TEST
     jal  ra, EDGE_CASE_TEST
     jal  ra, ROUNDING_TEST
@@ -422,23 +542,22 @@ BF16_MUL:
     beq  t3, t0, 1f                         # if exp_a == 0xFF, go to 1
     jal  x0, CHECK_B
 
-1:
-    bne t5, x0, RETURN_A                    # if mant_a != 0, go to RETURN_A
-    beq t4, t0, 2f                          # if exp_b == 0, go to 2
-    jal x0, 3f                              # return inf
+1:                                     # exp_a == 0xFF
+    bne t5, x0, RETURN_A               # a is NaN
 
+    beq t4, x0, 2f                     # exp_b == 0 → check mant_b
+    
+    beq t4, t0, 3f                     # exp_b == 0xFF → check mant_b
 
-2:  
-    beq t6, x0, RETURN_NAN                  # if mant_b == 0, go to RETURN_NAN
-    jal x0, 3f                              # return inf
+    jal x0, RETURN_INF
 
-3:                                          # NAN
-    slli a0, a2, 15
-    li   t0, BF16_EXP_MASK
-    or   a0, a0, t0
-    lw   ra, 8(sp)
-    addi sp, sp, 12
-    ret
+2:                                     # exp_b == 0
+    beq t6, x0, RETURN_NAN             # Inf * 0 -> NaN
+    jal x0, RETURN_INF                 # Inf * subnormal(nonzero) -> Inf
+
+3:                                     # exp_b == 0xFF
+    bne t6, x0, RETURN_B               # b == NaN
+    jal x0, RETURN_INF                 # b == INF
 
 CHECK_B:
     beq  t4, t0, 1f                         # if exp_b == 0xFF, go to 1
@@ -447,12 +566,11 @@ CHECK_B:
 1:
     bne t6, x0, RETURN_B                    # if mant_b != 0, go to RETURN_B
     beq t3, t0, 2f                          # if exp_a == 0, go to 2
-    jal x0, 3b                              # return inf
-
+    jal x0, RETURN_INF
 
 2:  
     beq t5, x0, RETURN_NAN                  # if mant_a == 0, go to RETURN_NAN
-    jal x0, 3b                              # return inf
+    jal x0, RETURN_INF
 
 CHECK_ZERO:
     beq t3, x0, CHECK_A_ZERO                # if exp_a == 0, check mant_a
@@ -612,7 +730,7 @@ BF16_DIV:
 
 2:
     bne  t5, x0, RETURN_NAN                 # if mant_a != 0, go to RETURN_NAN
-    jal  x0, RETURN_ZERO_SIGN               # return 0
+    jal  x0, RETURN_NAN               
 
 3: 
     beq  t6, x0, 4f                         # if mant_b == 0, go to 4
@@ -1140,87 +1258,6 @@ SPECIAL_ALL_PASS:
     addi sp, sp, 4
     ret
 
-ARITHMETIC_TEST:
-    
-    addi sp, sp, -4
-    sw   ra, 0(sp)
-    addi s0, x0, 0
-    la   s1, arithmeticValues_a
-    la   s2, arithmeticValues_b
-    la   s3, arithmeticResults
-
-    lw   a0, 0(s2)                         
-    jal  ra, F32_TO_BF16
-    mv   a1, a0                             # a1 = bf16 of b
-    lw   a0, 0(s1)                         
-    jal  ra, F32_TO_BF16                    # a0 = bf16 of a
-    jal  ra, BF16_ADD                       # a0 = a + b
-    jal  ra, BF16_TO_F32
-    lw   t0, 0(s3)                          # t0 = arithmeticResults[]
-    bne  a0, t0, ARITHMETIC_FAIL
-
-    lw   a0, 4(s2)
-    jal  ra, F32_TO_BF16
-    mv   a1, a0                             # a1 = bf16 of b
-    lw   a0, 4(s1)
-    jal  ra, F32_TO_BF16                    # a0 = bf16 of a
-    jal  ra, BF16_SUB                       # a0 = a - b
-    jal  ra, BF16_TO_F32
-    lw   t0, 4(s3)                          # t0 = arithmeticResults[]
-    bne  a0, t0, ARITHMETIC_FAIL
-
-    lw   a0, 8(s2)
-    jal  ra, F32_TO_BF16
-    mv   a1, a0                             # a1 = bf16 of b
-    lw   a0, 8(s1)
-    jal  ra, F32_TO_BF16                    # a0 = bf16 of a
-    jal  ra, BF16_MUL                       # a0 = a * b
-    jal  ra, BF16_TO_F32
-    lw   t0, 8(s3)                          # t0 = arithmeticResults[]
-    bne  a0, t0, ARITHMETIC_FAIL
-
-    lw   a0, 12(s2)
-    jal  ra, F32_TO_BF16
-    mv   a1, a0                             # a1 = bf16 of b
-    lw   a0, 12(s1)
-    jal  ra, F32_TO_BF16                    # a0 = bf16 of
-    jal  ra, BF16_DIV                       # a0 = a / b
-    jal  ra, BF16_TO_F32
-    lw   t0, 12(s3)                         # t0 = arithmeticResults[]
-    bne  a0, t0, ARITHMETIC_FAIL
-
-    lw   a0, 16(s1)
-    jal  ra, F32_TO_BF16                    # a0 = bf16 of a
-    jal  ra, BF16_SQRT                      # a0 = sqrt(a)
-    jal  ra, BF16_TO_F32
-    lw   t0, 16(s3)                         # t0 = arithmeticResults[]
-    bne  a0, t0, ARITHMETIC_FAIL
-
-    lw   a0, 20(s1)
-    jal  ra, F32_TO_BF16                    # a0 = bf16 of a
-    jal  ra, BF16_SQRT                      # a0 = sqrt(a)
-    jal  ra, BF16_TO_F32
-    lw   t0, 20(s3)                         # t0 = arithmeticResults[]
-    bne  a0, t0, ARITHMETIC_FAIL
-
-    jal  x0, ARITHMETIC_ALL_PASS
-
-ARITHMETIC_FAIL:
-    la   a0, arithmeticFAILmsg
-    li   a7, 4
-    ecall
-    lw   ra, 0(sp)
-    addi sp, sp, 4
-    ret
-
-ARITHMETIC_ALL_PASS:
-    la   a0, arithmeticOKmsg
-    li   a7, 4
-    ecall
-    lw   ra, 0(sp)
-    addi sp, sp, 4
-    ret
-
 COMPARE_TEST:
     addi sp, sp, -4
     sw   ra, 0(sp)
@@ -1403,3 +1440,148 @@ ROUNDING_ALL_PASS:
     lw   ra, 0(sp)
     addi sp, sp, 4
     ret
+
+ARITHMETIC_TESTS:
+    addi sp, sp, -4
+    sw   ra, 0(sp)
+    jal  ra, ADD_TEST
+    jal  ra, SUB_TEST
+    jal  ra, MUL_TEST
+    jal  ra, DIV_TEST
+    jal  ra, SQRT_TEST
+    la   a0, arithmeticOKmsg
+    li   a7, 4
+    ecall
+    lw   ra, 0(sp)
+    addi sp, sp, 4
+    ret
+
+ADD_TEST:
+    addi sp, sp, -4
+    sw   ra, 0(sp)
+    la  s0, BF16_ADD
+    la  s1, add_test_input
+    la  s2, add_test_output
+    la  s3, arithmeticFAILmsg
+    li  s5, NUM_ADD_TESTS
+    addi s6, x0, 0
+    j   TESTFIXTURE_TWO_ARG 
+
+SUB_TEST:
+    addi sp, sp, -4
+    sw   ra, 0(sp)
+    la  s0, BF16_SUB
+    la  s1, sub_test_input
+    la  s2, sub_test_output
+    la  s3, arithmeticFAILmsg
+    li  s5, NUM_SUB_TESTS
+    addi s6, x0, 0
+    j   TESTFIXTURE_TWO_ARG
+
+MUL_TEST:
+    addi sp, sp, -4
+    sw   ra, 0(sp)
+    la  s0, BF16_MUL
+    la  s1, mul_test_input
+    la  s2, mul_test_output
+    la  s3, arithmeticFAILmsg
+    li  s5, NUM_MUL_TESTS
+    addi s6, x0, 0
+    j   TESTFIXTURE_TWO_ARG
+
+DIV_TEST:
+    addi sp, sp, -4
+    sw   ra, 0(sp)
+    la  s0, BF16_DIV
+    la  s1, div_test_input
+    la  s2, div_test_output
+    la  s3, arithmeticFAILmsg
+    li  s5, NUM_DIV_TESTS
+    addi s6, x0, 0
+    j   TESTFIXTURE_TWO_ARG
+
+SQRT_TEST:
+    addi sp, sp, -4
+    sw   ra, 0(sp)
+    la  s0, BF16_SQRT
+    la  s1, sqrt_test_input
+    la  s2, sqrt_test_output
+    la  s3, arithmeticFAILmsg
+    li  s5, NUM_SQRT_TESTS
+    addi s6, x0, 0
+    j   TESTFIXTURE_ONE_ARG
+
+#////////////////////////////////////////////
+#
+#   Test Fixture One Argument Routines
+#
+#   input: s0 = function address
+#          s1 = address of input array
+#          s2 = address of output array
+#          s3 = address of fail message
+#          s5 = number of tests
+#          s6 = test counter (init to 0)
+#
+#///////////////////////////////////////////
+TESTFIXTURE_ONE_ARG:
+    beq s5, s6, TESTFIXTURE_ONE_ARG_ALL_PASSED
+    lw  s7, 0(s2)
+    lw  a0, 0(s1)
+    jalr ra, s0, 0
+    li   t0, 0xffff
+    and a0, a0, t0
+    bne a0, s7, TESTFIXTURE_ONE_ARG_FAILED
+    addi s1, s1, 4
+    addi s2, s2, 4
+    addi s6, s6, 1
+    jal x0, TESTFIXTURE_ONE_ARG
+
+TESTFIXTURE_ONE_ARG_ALL_PASSED:
+    lw   ra, 0(sp)
+    addi sp, sp, 4
+    ret
+
+TESTFIXTURE_ONE_ARG_FAILED:
+    mv   a0, s3
+    li   a7, 4
+    ecall
+    li   a7, 10
+    ecall
+
+#////////////////////////////////////////////
+#
+#   Test Fixture Two Argument Routines
+#
+#   input: s0 = function address
+#          s1 = address of input array
+#          s2 = address of output array
+#          s3 = address of fail message
+#          s5 = number of tests
+#          s6 = test counter (init to 0)
+#
+#///////////////////////////////////////////
+TESTFIXTURE_TWO_ARG:
+    beq s5, s6, TESTFIXTURE_TWO_ARG_ALL_PASSED
+    lw  s7, 0(s2)
+    lw  a0, 0(s1)
+    lw  a1, 4(s1)
+    jalr ra, s0, 0
+    li   t0, 0xffff
+    and a0, a0, t0
+    bne a0, s7, TESTFIXTURE_TWO_ARG_FAILED
+    addi s1, s1, 8
+    addi s2, s2, 4
+    addi s6, s6, 1
+    jal x0, TESTFIXTURE_TWO_ARG
+
+TESTFIXTURE_TWO_ARG_ALL_PASSED:
+    lw   ra, 0(sp)
+    addi sp, sp, 4
+    ret
+
+TESTFIXTURE_TWO_ARG_FAILED:
+    mv   a0, s3
+    li   a7, 4
+    ecall
+    li   a7, 10
+    ecall
