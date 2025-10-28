@@ -6,7 +6,7 @@ LINKER_SCRIPT = linker.ld
 EMU ?= ../rv32emu/bin/rv32emu
 
 AFLAGS = -g $(ARCH)
-CFLAGS = -g -march=rv32i_zicsr
+CFLAGS = -g -march=rv32i_zicsr -mabi=ilp32
 LDFLAGS = -T $(LINKER_SCRIPT)
 EXEC = test.elf
 
@@ -15,7 +15,7 @@ AS = $(CROSS_COMPILE)as
 LD = $(CROSS_COMPILE)ld
 OBJDUMP = $(CROSS_COMPILE)objdump
 
-OBJS = start.o main.o perfcounter.o chacha20_asm.o
+OBJS = start.o main.o perfcounter.o uf8_asm.o uf8_O0.o uf8_O2.o uf8_O3.o
 
 .PHONY: all run dump clean
 
@@ -26,6 +26,15 @@ $(EXEC): $(OBJS) $(LINKER_SCRIPT)
 
 %.o: %.S
 	$(AS) $(AFLAGS) $< -o $@
+
+uf8_O0.o: uf8.c
+	$(CC) $(CFLAGS) -O0 -DUF8_SUFFIX=_O0 -c $< -o $@
+
+uf8_O2.o: uf8.c
+	$(CC) $(CFLAGS) -O2 -DUF8_SUFFIX=_O2 -c $< -o $@
+
+uf8_O3.o: uf8.c
+	$(CC) $(CFLAGS) -O3 -DUF8_SUFFIX=_O3 -c $< -o $@
 
 %.o: %.c
 	$(CC) $(CFLAGS) $< -o $@ -c

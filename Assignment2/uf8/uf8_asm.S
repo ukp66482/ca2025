@@ -1,52 +1,4 @@
-.data
-newline: .string "\n"
-okmsg:   .string "All tests passed.\n"
-
 .text
-
-#////////////////////////////////////////////
-#
-#   Test for UF8_ENCODE and UF8_DECODE
-#   (exhaustive for all 256 possible inputs)
-#
-#////////////////////////////////////////////
-main:
-    addi a3, x0, 0                          # i = 0
-    addi a4, x0, 256                        # limit = 256
-    addi s3, x0, 1                          # passed = true (1)
-
-LOOP:
-    bge  a3, a4, END                        # if i >= 256 stop
-
-    mv   a0, a3                             # fl = i
-    jal  ra, UF8_DECODE
-    mv   s1, a0                             # value
-    
-    mv   a0, s1
-    jal  ra, UF8_ENCODE
-    mv   s2, a0                             # fl2
-    
-    bne  s2, a3, SET_FAIL                   # if fl2 != i fail  
-
-NEXT_ITER:
-    addi a3, a3, 1
-    jal  x0, LOOP
-
-SET_FAIL:
-    addi s3, x0, 0                          # passed = false
-    addi a3, a4, 0                          # force break (i = limit)
-    jal  x0, LOOP
-
-END:
-    beq  s3, x0, EXIT                       # if !passed skip message
-    la   a0, okmsg                  
-    li   a7, 4
-    ecall
-
-EXIT:
-    li   a7, 10
-    ecall   
-
 
 #////////////////////////////////////////////
 #
@@ -79,12 +31,15 @@ CLZ_MSB_IN_LOWER_HALF:
 
 #////////////////////////////////////////////
 #
-#   UF8_DECODE Function
+#   uf8_decode_asm Function
 #
 #   input a0 = x, output a0 = decode_result
 #
 #////////////////////////////////////////////
-UF8_DECODE:
+.globl uf8_decode_asm
+.type uf8_decode_asm, %function
+
+uf8_decode_asm:
     addi sp, sp, -8
     sw   ra, 4(sp)
     sw   a0, 0(sp)
@@ -104,14 +59,19 @@ UF8_DECODE:
     addi sp, sp, 8
     ret                                     # a0 decode_result, a1 input
 
+.size uf8_decode_asm, .-uf8_decode_asm
+
 #////////////////////////////////////////////
 #
-#   UF8_ENCODE Function
+#   uf8_encode_asm Function
 #
 #   input a0 = x, return a0 = encode_result
 #
 #////////////////////////////////////////////
-UF8_ENCODE:
+.globl uf8_encode_asm
+.type uf8_encode_asm, %function
+
+uf8_encode_asm:
     addi sp, sp, -8
     sw   ra, 4(sp)
     sw   a0, 0(sp)
@@ -170,3 +130,5 @@ ENCODE_RET:
     lw   a1, 0(sp) 
     addi sp, sp, 8
     ret
+
+.size uf8_encode_asm, .-uf8_encode_asm
