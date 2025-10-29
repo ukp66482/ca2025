@@ -15,7 +15,7 @@ AS = $(CROSS_COMPILE)as
 LD = $(CROSS_COMPILE)ld
 OBJDUMP = $(CROSS_COMPILE)objdump
 
-OBJS = start.o main.o perfcounter.o hanoi_iterative.o
+OBJS = start.o main.o perfcounter.o rsqrt.o
 
 .PHONY: all run dump clean
 
@@ -26,15 +26,6 @@ $(EXEC): $(OBJS) $(LINKER_SCRIPT)
 
 %.o: %.S
 	$(AS) $(AFLAGS) $< -o $@
-
-#uf8_O0.o: uf8.c
-#	$(CC) $(CFLAGS) -O0 -DUF8_SUFFIX=_O0 -c $< -o $@
-
-#uf8_O2.o: uf8.c
-#	$(CC) $(CFLAGS) -O2 -DUF8_SUFFIX=_O2 -c $< -o $@
-
-#uf8_O3.o: uf8.c
-#	$(CC) $(CFLAGS) -O3 -DUF8_SUFFIX=_O3 -c $< -o $@
 
 %.o: %.c
 	$(CC) $(CFLAGS) $< -o $@ -c

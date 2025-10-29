@@ -28,7 +28,7 @@ static inline uint32_t clz(uint32_t x)
 }
 
 /* Decode uf8 to uint32_t */
-extern uint32_t UF8_DECODE_FN(uint32_t fl)
+uint32_t UF8_DECODE_FN(uint32_t fl)
 {
     uint32_t mantissa = fl & 0x0f;
     uint8_t exponent = fl >> 4;

@@ -147,22 +147,23 @@ static void print_dec(unsigned long val)
 /* ============= Hanoi Tower Solver Declaration ============= */
 
 /* Assembly versions */
-extern uint32_t hanoi_interative_asm(uint32_t disks, uint32_t src, uint32_t dest, uint32_t aux);
+extern uint32_t hanoi_iter_asm(uint32_t n);
 
 /* C versions (linked with different optimization levels) */
-extern uint32_t uf8_decode_O0(uint32_t x);
-extern uint32_t uf8_encode_O0(uint32_t x);
-extern uint32_t uf8_decode_O2(uint32_t x);
-extern uint32_t uf8_encode_O2(uint32_t x);
-extern uint32_t uf8_decode_O3(uint32_t x);
-extern uint32_t uf8_encode_O3(uint32_t x);
+extern uint32_t hanoi_rec_wrapper_O0(uint32_t n);
+extern uint32_t hanoi_rec_wrapper_O2(uint32_t n);
+extern uint32_t hanoi_rec_wrapper_O3(uint32_t n);
+
+extern uint32_t hanoi_iter_O0(uint32_t n);
+extern uint32_t hanoi_iter_O2(uint32_t n);
+extern uint32_t hanoi_iter_O3(uint32_t n);
 
 /* ============= Test Suite ============= */
 
-typedef uint32_t (*uf8_func)(uint32_t);
-typedef void (*test_func_t)(uf8_func encode, uf8_func decode);
+typedef uint32_t (*hanoi_func)(uint32_t);
+typedef void (*test_func_t)(hanoi_func solver, uint32_t max_disks);
 
-static void run_test(test_func_t test_func, uf8_func encode, uf8_func decode)
+static void run_test(test_func_t test_func, hanoi_func solver, uint32_t disks)
 {
     uint64_t start_cycles, end_cycles, cycles_elapsed;
     uint64_t start_instret, end_instret, instret_elapsed;
@@ -170,7 +171,7 @@ static void run_test(test_func_t test_func, uf8_func encode, uf8_func decode)
     start_cycles = get_cycles();
     start_instret = get_instret();
 
-    test_func();
+    test_func(solver, disks);
 
     end_cycles = get_cycles();
     end_instret = get_instret();
@@ -185,38 +186,41 @@ static void run_test(test_func_t test_func, uf8_func encode, uf8_func decode)
     TEST_LOGGER("\n\n");
 }
 
-static void test_UF8(uf8_func encode, uf8_func decode) {
-    for (int i = 0; i < 256; i++) {
-        uint32_t val = decode(i);
-        uint32_t back = encode(val);
-        if (back != i) {
-            TEST_LOGGER("UF8 Encode/Decode test failed for input: ");
-            print_hex(i);
-            TEST_LOGGER("  Decoded value: ");
-            print_hex(val);
-            TEST_LOGGER("  Re-encoded value: ");
-            print_hex(back);
-        }
-    }
-    TEST_LOGGER("UF8 Encode/Decode test passed for all inputs.\n");
+static void hanoi_test_suite(hanoi_func solver, uint32_t disks)
+{
+    uint32_t moves = solver(disks);
+    TEST_LOGGER("Disks: ");
+    print_dec(disks);
+    TEST_LOGGER("Moves: ");
+    print_dec(moves);
+    TEST_LOGGER("\n");
 }
-
 
 int main(void)
 {
-    TEST_LOGGER("\n=== UF8 Encode/Decode Tests ===\n\n");
+    TEST_LOGGER("\n=== Hanoi Tower Tests ===\n\n");
+    const uint32_t max_disks = 15;
 
-    TEST_LOGGER("Test0 : UF8 Encode/Decode by my self assembly\n");
-    run_test(test_UF8, uf8_encode_asm, uf8_decode_asm);
+    TEST_LOGGER("Testing hanoi_tower (Assembly iterative)...\n");
+    run_test(hanoi_test_suite, hanoi_iter_asm, max_disks);
+    
+    TEST_LOGGER("Testing hanoi_tower (C iterative O0)...\n");
+    run_test(hanoi_test_suite, hanoi_iter_O0, max_disks);
 
-    TEST_LOGGER("Test1 : UF8 Encode/Decode by O0 C version\n");
-    run_test(test_UF8, uf8_encode_O0, uf8_decode_O0);
+    TEST_LOGGER("Testing hanoi_tower (C iterative O2)...\n");
+    run_test(hanoi_test_suite, hanoi_iter_O2, max_disks);
 
-    TEST_LOGGER("Test2 : UF8 Encode/Decode by O2 C version\n");
-    run_test(test_UF8, uf8_encode_O2, uf8_decode_O2);
+    TEST_LOGGER("Testing hanoi_tower (C iterative O3)...\n");
+    run_test(hanoi_test_suite, hanoi_iter_O3, max_disks);
 
-    TEST_LOGGER("Test3 : UF8 Encode/Decode by O3 C version\n");
-    run_test(test_UF8, uf8_encode_O3, uf8_decode_O3);
+    TEST_LOGGER("Testing hanoi_tower (C recursive O0)...\n");
+    run_test(hanoi_test_suite, hanoi_rec_wrapper_O0, max_disks);
+
+    TEST_LOGGER("Testing hanoi_tower (C recursive O2)...\n");
+    run_test(hanoi_test_suite, hanoi_rec_wrapper_O2, max_disks);
+
+    TEST_LOGGER("Testing hanoi_tower (C recursive O3)...\n");
+    run_test(hanoi_test_suite, hanoi_rec_wrapper_O3, max_disks);
 
     return 0;
 }
