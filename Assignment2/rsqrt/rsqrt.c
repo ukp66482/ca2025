@@ -58,8 +58,7 @@ uint32_t rsqrt(uint32_t x){
         uint64_t xy2 = (uint64_t)mul32(x, y2);
         uint64_t factor_num = (3u << 16);
         factor_num = (xy2 >= factor_num) ? 0 : (factor_num - xy2);
-        uint32_t factor = (uint32_t)(factor_num >> 1);
-        y = (uint32_t)((mul32(y, factor)) >> 16);
+        y = (uint32_t)((mul32(y, factor_num)) >> 17);
     }
     return y;
 }

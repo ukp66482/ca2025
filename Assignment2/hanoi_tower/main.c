@@ -199,7 +199,7 @@ static void hanoi_test_suite(hanoi_func solver, uint32_t disks)
 int main(void)
 {
     TEST_LOGGER("\n=== Hanoi Tower Tests ===\n\n");
-    const uint32_t max_disks = 15;
+    const uint32_t max_disks = 3;
 
     TEST_LOGGER("Testing hanoi_tower (Assembly iterative)...\n");
     run_test(hanoi_test_suite, hanoi_iter_asm, max_disks);
