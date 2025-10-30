@@ -15,7 +15,7 @@ AS = $(CROSS_COMPILE)as
 LD = $(CROSS_COMPILE)ld
 OBJDUMP = $(CROSS_COMPILE)objdump
 
-OBJS = start.o main.o perfcounter.o rsqrt.o
+OBJS = start.o main.o perfcounter.o rsqrt_O0.o rsqrt_O2.o rsqrt_O3.o rsqrt_Ofast.o
 
 .PHONY: all run dump clean
 
@@ -23,6 +23,18 @@ all: $(EXEC)
 
 $(EXEC): $(OBJS) $(LINKER_SCRIPT)
 	$(LD) $(LDFLAGS) -o $@ $(OBJS)
+
+rsqrt_O0.o: rsqrt.c
+	$(CC) $(CFLAGS) -O0 -DRSQRT_SUFFIX=_O0 -c $< -o $@
+
+rsqrt_O2.o: rsqrt.c
+	$(CC) $(CFLAGS) -O2 -DRSQRT_SUFFIX=_O2 -c $< -o $@
+
+rsqrt_O3.o: rsqrt.c
+	$(CC) $(CFLAGS) -O3 -DRSQRT_SUFFIX=_O3 -c $< -o $@
+
+rsqrt_Ofast.o: rsqrt.c
+	$(CC) $(CFLAGS) -Ofast -DRSQRT_SUFFIX=_Ofast -c $< -o $@
 
 %.o: %.S
 	$(AS) $(AFLAGS) $< -o $@

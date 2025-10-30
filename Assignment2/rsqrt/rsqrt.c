@@ -1,3 +1,12 @@
+#ifndef RSQRT_SUFFIX
+#define RSQRT_SUFFIX
+#endif
+
+#define CONCAT2(x, y) x##y
+#define CONCAT(x, y) CONCAT2(x, y)
+
+#define RSQRT_FN CONCAT(rsqrt, RSQRT_SUFFIX)
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -34,7 +43,7 @@ static const uint32_t rsqrt_table[32] = {
     2, 1
 };
 
-uint32_t rsqrt(uint32_t x){
+uint32_t CONCAT(rsqrt, RSQRT_SUFFIX)(uint32_t x){
     if (x == 0) return 0xFFFFFFFF;
     if (x == 1) return 65536;
     

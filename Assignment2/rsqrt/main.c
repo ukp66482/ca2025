@@ -146,13 +146,40 @@ static void print_dec(unsigned long val)
 
 /* ============= rsqrt Declaration ============= */
 
-extern uint32_t rsqrt(uint32_t x);
+extern uint32_t rsqrt_O0(uint32_t x);
+extern uint32_t rsqrt_O2(uint32_t x);
+extern uint32_t rsqrt_O3(uint32_t x);
+extern uint32_t rsqrt_Ofast(uint32_t x);
 
 /* ============= Test Suite ============= */
 
+typedef uint32_t (*rsqrt_func)(uint32_t);
+typedef void (*test_func_t)(rsqrt_func rsqrt);
 
+static void run_test(test_func_t test_func, rsqrt_func rsqrt)
+{
+    uint64_t start_cycles, end_cycles, cycles_elapsed;
+    uint64_t start_instret, end_instret, instret_elapsed;
 
-int main(void){
+    start_cycles = get_cycles();
+    start_instret = get_instret();
+
+    test_func(rsqrt);
+
+    end_cycles = get_cycles();
+    end_instret = get_instret();
+
+    cycles_elapsed = end_cycles - start_cycles;
+    instret_elapsed = end_instret - start_instret;
+
+    TEST_LOGGER("  Cycles: ");
+    print_dec((unsigned long) cycles_elapsed);
+    TEST_LOGGER("  Instructions: ");
+    print_dec((unsigned long) instret_elapsed);
+    TEST_LOGGER("\n\n");
+}
+
+static void test_sqrt(rsqrt_func rsqrt) {
     uint32_t test_values[] = {
         1,2,3,4,10,16,100,1000,10000,65536,123456,UINT32_MAX
     };
@@ -161,10 +188,25 @@ int main(void){
     for (int i = 0; i < num_tests; i++) {
         uint32_t val = test_values[i];
         uint32_t result = rsqrt(val);
-        TEST_LOGGER("rsqrt(");
-        print_dec(val);
-        TEST_LOGGER(") = ");
+        //TEST_LOGGER("rsqrt(");
+        //print_dec(val);
+        //TEST_LOGGER(") = ");
         print_dec(result);
     }
+}
+
+
+int main(void){
+    TEST_LOGGER("Testing rsqrt_O0:\n");
+    run_test(test_sqrt, rsqrt_O0);
+
+    TEST_LOGGER("Testing rsqrt_O2:\n");
+    run_test(test_sqrt, rsqrt_O2);
+
+    TEST_LOGGER("Testing rsqrt_O3:\n");
+    run_test(test_sqrt, rsqrt_O3);
+
+    TEST_LOGGER("Testing rsqrt_Ofast:\n");
+    run_test(test_sqrt, rsqrt_Ofast);
     return 0;
 }
