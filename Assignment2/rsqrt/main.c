@@ -152,10 +152,9 @@ extern uint32_t rsqrt(uint32_t x);
 
 
 
-int main(void)
-{
+int main(void){
     uint32_t test_values[] = {
-        1, 4, 9, 20, 100, 65536, 16384
+        1, 4, 16, 100, UINT32_MAX
     };
     int num_tests = sizeof(test_values) / sizeof(test_values[0]);
     

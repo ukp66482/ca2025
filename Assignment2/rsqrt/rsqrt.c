@@ -14,8 +14,7 @@ static int clz(uint32_t x){
     return n;
 }
 
-static uint64_t mul32(uint32_t a, uint32_t b)
-{
+static uint64_t mul32(uint32_t a, uint32_t b){
     uint64_t result = 0;
     for(int i = 0; i < 32; i++) {
         if (b & (1U << i)) {
@@ -25,7 +24,7 @@ static uint64_t mul32(uint32_t a, uint32_t b)
     return result;
 }
 
-static const uint16_t rsqrt_table[32] = {
+static const uint32_t rsqrt_table[32] = {
     65536, 46341, 32768, 23170, 16384,
     11585, 8192, 5793, 4096, 2896,
     2048, 1448, 1024, 724, 512,
@@ -35,8 +34,7 @@ static const uint16_t rsqrt_table[32] = {
     2, 1
 };
 
-uint32_t rsqrt(uint32_t x)
-{
+uint32_t rsqrt(uint32_t x){
     if (x == 0) return 0xFFFFFFFF;
     if (x == 1) return 65536;
     
@@ -48,15 +46,20 @@ uint32_t rsqrt(uint32_t x)
     if(x > (1u << exp)){
         uint32_t y_next = (exp < 31) ? rsqrt_table[exp + 1] : 0;
         uint32_t delta = y - y_next;
-        uint32_t frac = ((x - (1u << exp)) << 16) / (1u << exp);
-        y = y - (uint32_t) ((delta * frac) >> 16);
+        uint64_t numer = ((uint64_t)(x - (1u << exp)) << 16);
+        uint32_t frac = (uint32_t)(numer >> exp);
+        y = y - (uint32_t)((mul32(delta, frac)) >> 16);
     }
 
     // Newton-Raphson iterations
-    for(int iter = 0; iter < 6; iter++) {
-        uint32_t y2 = (uint32_t)(mul32(y, y) >> 16);
-        uint32_t xy2 = (uint32_t)(mul32(x, y2) >> 16);
-        y = (uint32_t)((mul32(y, (3u << 16) - xy2)) >> 17);
+    for(int iter = 0; iter < 2; iter++) {
+        uint64_t y_sq = mul32(y, y);
+        uint32_t y2 = (uint32_t)(y_sq >> 16);
+        uint64_t xy2 = (uint64_t)mul32(x, y2);
+        uint64_t factor_num = (3u << 16);
+        factor_num = (xy2 >= factor_num) ? 0 : (factor_num - xy2);
+        uint32_t factor = (uint32_t)(factor_num >> 1);
+        y = (uint32_t)((mul32(y, factor)) >> 16);
     }
     return y;
 }

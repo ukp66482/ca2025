@@ -37,8 +37,7 @@ uint32_t UF8_DECODE_FN(uint32_t fl)
 }
 
 /* Encode uint32_t to uf8 */
-extern uint32_t UF8_ENCODE_FN(uint32_t value)
-{
+uint32_t UF8_ENCODE_FN(uint32_t value){
     /* Use CLZ for fast exponent calculation */
     if (value < 16)
         return value;
