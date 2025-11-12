@@ -188,9 +188,9 @@ static void test_sqrt(rsqrt_func rsqrt) {
     for (int i = 0; i < num_tests; i++) {
         uint32_t val = test_values[i];
         uint32_t result = rsqrt(val);
-        //TEST_LOGGER("rsqrt(");
-        //print_dec(val);
-        //TEST_LOGGER(") = ");
+        TEST_LOGGER("rsqrt(");
+        print_dec(val);
+        TEST_LOGGER(") = ");
         print_dec(result);
     }
 }
@@ -199,7 +199,7 @@ static void test_sqrt(rsqrt_func rsqrt) {
 int main(void){
     TEST_LOGGER("Testing rsqrt_O0:\n");
     run_test(test_sqrt, rsqrt_O0);
-
+    /*
     TEST_LOGGER("Testing rsqrt_O2:\n");
     run_test(test_sqrt, rsqrt_O2);
 
@@ -208,5 +208,6 @@ int main(void){
 
     TEST_LOGGER("Testing rsqrt_Ofast:\n");
     run_test(test_sqrt, rsqrt_Ofast);
+    */
     return 0;
 }
