@@ -25,7 +25,7 @@ CLZ_MSB_IN_LOWER_HALF:
     bne  t1, x0, CLZ_LOOP
     sub  a0, t0, a0                         # return
     lw   ra, 4(sp)
-    lw   a1, 0(sp)                          # input x 
+    lw   a1, 0(sp)                          # input x
     addi sp, sp, 8
     ret                                     # a0 clz_result, a1 input
 
