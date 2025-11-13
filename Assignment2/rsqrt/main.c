@@ -199,7 +199,7 @@ static void test_sqrt(rsqrt_func rsqrt) {
 int main(void){
     TEST_LOGGER("Testing rsqrt_O0:\n");
     run_test(test_sqrt, rsqrt_O0);
-    /*
+    
     TEST_LOGGER("Testing rsqrt_O2:\n");
     run_test(test_sqrt, rsqrt_O2);
 
@@ -208,6 +208,6 @@ int main(void){
 
     TEST_LOGGER("Testing rsqrt_Ofast:\n");
     run_test(test_sqrt, rsqrt_Ofast);
-    */
+    
     return 0;
 }
